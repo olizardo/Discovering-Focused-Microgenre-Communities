@@ -1,0 +1,118 @@
+---
+    title: "Discovering Focused Microgenre Communities: Dendrograms"
+    author: "Omar Lizardo"
+    date: "`r Sys.Date()`"
+    output:
+        html_document: default
+---
+
+# Setup
+```{r setup}
+    knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
+    require("dendextend")
+    require("here")
+    require("RColorBrewer")
+```
+
+```{r Loading link distance matrix and performing link clustering}
+    load(file= here("dat", "lclust-res.RData"))
+```
+
+
+# Dendrogram Plots from Link Clustered Data
+```{r Plotting macrogenre dendrograms (1)}
+    k <- length(dend.macro$lower)
+    png(here("Plots", "Dend", "all-branches-macro.png"), height = 900, width = 1600)
+    d <- lclust.dend
+    d %>% 
+      set("labels", c(rep("", nleaves(d)))) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+      set("branches_lwd", value = 3) %>%
+      plot(axes = FALSE) %>% 
+      abline(h = 8, col="red", lty = 2, lwd = 3) 
+```
+
+```{r Plotting macrogenre dendrograms (2)}
+    k <- length(dend.macro$lower)
+    png(here("Plots", "Dend", "all-branches-macro-labels.png"), height = 900, width = 1600)
+    d <- dend.macro$upper
+    d %>% 
+      set("labels", dend.macro$lower %>% names) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2")) %>% 
+      set("branches_lwd", value = 4) %>% 
+      set("labels_color", value = brewer.pal(k, "Dark2")) %>% 
+      set("labels_cex", value = 2.5) %>% 
+      plot(axes = FALSE) 
+    abline(h = 8, col="red", lty = 2, lwd = 3)
+```
+
+```{r Plotting microgenre dendrograms (1)}
+    k <- length(dend.micro$lower)
+    png(here("Plots", "Dend", "all-branches-micro.png"), height = 900, width = 1600)
+    k <- length(dend.micro$lower)
+    d <- lclust.dend
+    d %>% 
+      set("labels", c(rep("", nleaves(d)))) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+      set("branches_lwd", value = 3) %>%
+      plot(axes = FALSE) %>% 
+      abline(h = 3, col="red", lty = 2, lwd = 3) 
+```
+    
+```{r Plotting microgenre dendrograms (2)}
+    k <- length(dend.micro$lower)
+    png(here("Plots", "Dend", "all-branches-micro-labels.png"), height = 900, width = 1600)
+    d <- dend.micro$upper
+    d %>% 
+      set("labels", micro.g.names) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+      set("branches_lwd", value = 3) %>% 
+      set("labels_color", value = brewer.pal(k, "Dark2")) %>% 
+      set("labels_cex", value = 0.9) %>% 
+      plot(axes = FALSE) 
+    par(cex= 2.5)
+    title(xlab="", ylab="", main="") %>% 
+      abline(h = 3, col="red", lty = 2, lwd = 3)
+```
+
+```{r Plotting genre-specific dendrograms (1)}
+    png(here("Plots", "Dend", "classic-rock-branches.png"), height = 900, width = 1600)
+    k <- n.micro["Classic_Rock"]
+    d <- dend.macro$lower$Classic_Rock
+    d %>% 
+      set("labels", c(rep("", nleaves(d)))) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+      set("branches_lwd", value = 3) %>% 
+      plot(axes = FALSE) 
+    par(cex = 5)
+    title(xlab="", ylab="", main="Classic Rock") %>% 
+      abline(h = 3, col="red", lty = 2, lwd = 3)
+```
+
+```{r Plotting genre-specific dendrograms (2)}
+    png(here("Plots", "Dend", "blues-branches.png"), height = 900, width = 1600)
+    k <- n.micro["Blues_RandB"]
+    d <- dend.macro$lower$Blues_RandB
+    d %>% 
+      set("labels", c(rep("", nleaves(d)))) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+      set("branches_lwd", value = 3) %>%        
+      plot(axes = FALSE) 
+    par(cex = 5)
+    title(xlab="", ylab="", main="Blues/R&B") %>% 
+      abline(h = 3, col="red", lty = 2, lwd = 3)
+```
+
+```{r Plotting genre-specific dendrograms (3)}
+    png(here("Plots", "Dend", "opera-branches.png"), height = 900, width = 1600)
+    k <- n.micro["Opera"]
+    d <- dend.macro$lower$Opera
+    d %>% 
+      set("labels", c(rep("", nleaves(d)))) %>% 
+      set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+      set("branches_lwd", value = 3) %>%
+      plot(axes = FALSE) 
+    par(cex = 5)
+    title(xlab="", ylab="", main="Opera") %>% 
+      abline(h = 3, col="red", lty = 2, lwd = 3)
+```

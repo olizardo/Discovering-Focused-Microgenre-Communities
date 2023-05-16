@@ -1,0 +1,101 @@
+---
+  title: "Discovering Focused Microgenre Communities: Microgenre Analysis"
+  author: "Omar Lizardo"
+  date: "`r Sys.Date()`"
+  output:
+    html_document: default
+---
+
+# Setup
+```{r setup}
+    knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
+    library("car")
+    library("conflicted")
+    library("dendextend")
+    library("FactoMineR")
+    library("gghighlight")
+    library("ggrepel")
+    library("here")
+    library("RColorBrewer")
+    library("scales")
+    library("sjPlot")
+    library("splines")
+    library("tidyverse")
+    library("wesanderson")
+```
+
+```{r Loading required objects}
+    load(file= here("dat", "lclust-res.RData"))
+```
+
+
+```{r Heavy Metal Microgenre Analysis}
+    source(here("Functions", "micro.genre.dat.R"))
+    heavy.dat <- micro.genre.dat(genre = "Heavy_Metal", k = 3) 
+```
+
+```{r}
+    dat.ca <- heavy.dat$b %>% 
+              right_join(demog.dat) %>% 
+              dplyr::select(c(starts_with("Heavy"), "educ", "age", -"id"))
+    res.ca <- MCA(dat.ca, graph = FALSE, quali.sup = c("educ", "age"))
+```
+
+```{r}
+      d <- data.frame(res.ca$var$coord) %>% 
+           bind_rows(data.frame(res.ca$quali.sup$coord)*20)
+      plot.dat <- d %>% 
+                  mutate(rowname = rownames(d)) %>% 
+                  dplyr::filter(!str_detect(rowname, ".NA$")) %>% 
+                  dplyr::filter(!str_detect(rowname, "_No$"))
+     p <- ggplot(data = plot.dat, aes(x = Dim.2, y = Dim.3))
+     p <- p + geom_hline(yintercept = 0, color = "lightgray") 
+     p <- p + geom_vline(xintercept = 0, color = "lightgray")
+     p <- p + geom_text_repel(aes(label = rownames(plot.dat)), 
+                              max.overlaps = 100)
+     p <- p + theme_sjplot()
+     p <- p + theme(legend.position = "none",
+                    axis.line.x = element_blank(),
+                    axis.line.y = element_blank(),
+                    axis.text = element_text(size = 12))
+     p <- p + labs(x = "First Dimension", y = "Second Dimension")
+     #p <- p + scale_color_brewer(palette = "Dark2")
+     #p <- p + scale_x_continuous(limits = c(-2, 2.5))
+     #p <- p + scale_y_continuous(limits = c(-1.1, 1.1))
+     p
+```
+
+```{r}
+    source(here("Functions", "pred.probs.R"))
+    source(here("Functions", "mpred.probs.R"))
+    bin.var <- function(x) {
+      if_else(x == 2, 1, 0)
+      }
+    dat.pred <- heavy.dat$m %>% 
+              mutate(across(starts_with("Heavy"), as.numeric)) %>% 
+              mutate(across(starts_with("Heavy"), bin.var)) %>% 
+              right_join(demog.dat) 
+    pred.res <- mpred.probs("Heavy", dat.pred)
+```
+
+```{r}
+    plot.dat <- pred.res$probs$Heavy_Metal_1
+    p <- ggplot(data = dat,
+                mapping = aes(x = cat.labs, y = prob, 
+                              fill = var.type, color = var.type, group = var.type))
+    p <- p + geom_hline(yintercept = b, color = "red", linewidth = 0.25)
+    p <- p + geom_point(size = 2.5)
+    p <- p + geom_line(data = con.x, linewidth = 0.75)
+    p <- p + geom_segment(data = cat.x,
+                          mapping = aes(y = lo, x = cat.labs, yend = hi, xend = cat.labs), 
+                          alpha = 0.2, linewidth = 1.15)
+    p <- p + geom_ribbon(data = con.x, 
+                         mapping = aes(ymin = lo, ymax = hi), 
+                         alpha = 0.15, linetype = 0)
+
+```
+
+
+
+
+
