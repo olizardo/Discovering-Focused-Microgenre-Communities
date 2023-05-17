@@ -1,4 +1,4 @@
-link.dist <- function(x, id, null = 0) { #takes binary two mode person by genre data matrix as input
+link.dist <- function(x, id, null = 1) { #takes binary two mode person by genre data matrix as input
     Jaccard <- function (a, b) { #function to compute Jaccard similarity between binary vectors
         M.11 <- sum(a == 1 & b == 1)
         M.10 <- sum(a == 1 & b == 0)

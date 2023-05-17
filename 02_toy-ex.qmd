@@ -12,7 +12,7 @@ date: "`r Sys.Date()`"
     library("here")
     library("ggplot2")
     library("sjPlot")
-    source(here("R", "Functions", "link.dist.R"))
+    source(here("Functions", "link.dist.R"))
 ```
 
 # Link Clustering (Toy Example)
@@ -23,7 +23,7 @@ date: "`r Sys.Date()`"
            1, 0, 0, 1, 
            0, 0, 1, 1)
     x <- matrix(x, nrow = 5, ncol = 4,  byrow = TRUE) #toy data
-    ldist.res <- link.dist(x = x, id = c(1:5)) #link distance matrix
+    ldist.res <- link.dist(x = x, id = c(1:5), null = 1) #link distance matrix
     hc.res <- hclust(ldist.res$dist, method = "ward.D2") #link clustering
 ```
     
