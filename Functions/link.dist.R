@@ -1,4 +1,4 @@
-link.dist <- function(x, id, null = 1) { #takes binary two mode person by genre data matrix as input
+link.dist <- function(x, id) { #takes binary two mode person by genre data matrix as input
     Jaccard <- function (a, b) { #function to compute Jaccard similarity between binary vectors
         M.11 <- sum(a == 1 & b == 1)
         M.10 <- sum(a == 1 & b == 0)
@@ -16,7 +16,7 @@ link.dist <- function(x, id, null = 1) { #takes binary two mode person by genre 
             }
         }
     m <- nrow(e) #number of edges in two mode data
-    s <- matrix(null, nrow = m, ncol = m) #creating empty edge similarity matrix 
+    s <- matrix(0, nrow = m, ncol = m) #creating empty edge similarity matrix 
     for (i in 1:m) {
         for (j in 1:m) {
             g1 <- e[i, 2] #genre node in first edge

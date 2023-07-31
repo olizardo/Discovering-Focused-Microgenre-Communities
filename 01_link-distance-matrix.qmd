@@ -9,12 +9,12 @@
 # Setup
 ```{r setup}
     knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
-    require("dendextend")
-    require("fastcluster")
-    require("here")   
-    require("haven")
-    require("tidyverse")
-    source(here("Functions", "link.dist.R"))
+    library(conflicted)
+    library(dendextend)
+    library(fastcluster)
+    library(here)   
+    library(haven)
+    library(tidyverse)
 ```
 
 # Data Wrangling
@@ -49,126 +49,16 @@
       taste.mat <- as.matrix(taste.dat[, 2:ncol(taste.dat)])
 ```
 
-```{r Importing demographic data}
-        ed.labs <- c("< High School", "High School/GED", "Associate", "Some College", "Bachelor's", "Postgraduate")
-        demog.dat <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta") %>% 
-          dplyr::select(c("id", "age", "agemid", "female", "raceeth", 
-                          "nodipdeg", "hsged", "somcol", "aadeg", "bach", "ma", 
-                          "docprof", "incmid", "income", "percclass",
-                          "region", "occ", "parented", "empstat", "favgen")) %>% 
-          as_factor() %>% 
-          mutate(educ = if_else(nodipdeg == "yes", 1, 
-                                if_else(hsged == "yes", 2, 
-                                        if_else(aadeg == "yes", 3, 
-                                                if_else(somcol == "yes", 4,
-                                                        if_else(bach == "yes", 5,
-                                                                if_else(ma == "yes" | docprof == "yes", 6, 1)))))),
-                 educ = factor(educ, labels = ed.labs),
-                 percclass = fct_recode(percclass,
-                                        "Lower Class I.D." = "lower class",
-                                        "Workng Class I.D." = "working class",
-                                        "Middle/Upper Class I.D." = "middle class",
-                                        "Middle/Upper Class I.D." = "upper class"),
-                 raceeth = fct_recode(raceeth,
-                                      "Asian" = "Asian",
-                                      "Black" = "Black",
-                                      "Hisp." = "Hispanic",
-                                      "White" = "White",
-                                      "Mult./Other" = ">1 race",
-                                      "Mult./Other" = "other"),
-                 female = fct_recode(female, 
-                                     "Men" = "male", 
-                                             "Women" = "female"),
-                 region = fct_recode(region,
-                                     "New England" = "New Enlgnad",
-                                     "South" = "East South",
-                                     "South" = "South Atlantic",
-                                     "Southwest" = "West South",
-                                     "Midwest" = "Eastern Midwest",
-                                     "Midwest" = "Western Midwest",
-                                     "Mountain" = "Mountain West",
-                                     "West Coast" = "Pacific West"),
-                 parented = fct_recode(parented, 
-                                       "Parent College? (No)" = "parent no college", 
-                                       "Parent College? (Yes)" = "parent college"),
-                 empstat_n = factor(as.numeric(empstat)),
-                 objclass = case_when(incmid == "5000" | incmid == "15000" ~ 1,
-                                      incmid == "25000" | incmid == "35000" ~ 2, 
-                                      incmid == "45000" | incmid == "55000" | incmid == "65000" ~ 4,
-                                      incmid == "75000" | incmid == "85000" | incmid == "95000" ~ 5,
-                                      incmid == "105000" | incmid == "115000" | 
-                                        incmid == "125000" | incmid == "135000" |
-                                        incmid == "145000" | incmid == "150000" |
-                                        incmid == "165000" | incmid == "175000" |
-                                        incmid == "185000" | incmid == "195000" |
-                                        incmid == "212500" | incmid == "237500" |
-                                        incmid == "250,000 or more" ~ 6),
-                 objclass = factor(objclass, labels = c("Poor", "Working Class", "Middle Class", "Upper Middle Class", "High Income")),
-                 educ_n = as.numeric(educ),
-                 college = if_else(educ_n > 4, 1, 0),
-                 college = factor(college, labels = c("No Degree", "College")),
-                 age_n = as.numeric(age),
-                 objclass_n = as.numeric(objclass)
-          ) %>% 
-          dplyr::select(-c("nodipdeg", "hsged", "somcol", "aadeg", "bach", "ma", "docprof")) %>% 
-            mutate(id = as.integer(id)) %>% 
-            na.omit() 
-```
-
 # Link Clustering
-```{r Performing link clustering and saving results}
-    ldist.res <- link.dist(x = taste.mat, id = taste.dat$id) #computing link by link distance matrix
-    lclust.res <- hclust(ldist.res$dist, method = "ward.D2") #link clustering of link by link distance matrix
-    lclust.dend <- as.dendrogram(lclust.res) #transforming link clustering into dendrogram
-```
-
-
-```{r Creating objects for analysis}
-    dend.macro <- cut(lclust.dend, h = 8) #cutting at macrogenre level
-    a <- data.frame(g.size = sapply(dend.macro$lower, nleaves)) #macrogenres as ordered in dendrogram results
-    b <- data.frame(g.size = colSums(taste.mat), g.names = names(colSums(taste.mat))) #original macrogenre sizes
-    c <- right_join(a, b) #joining data frames by macrogenre sizes to get macrogenre labels ordered by dendrogram results
-    names(dend.macro$lower) <- c$g.names #naming macrogenre dendrogram list
-    n.micro <- sapply(dend.macro$lower, function(x) {length(table(cutree(x, h = 3)))}) #number of microgenres per macrogenre
-    v <- sapply(sapply(n.micro, function(x) {1:x}), as.numeric)
-    micro.g.names <- paste(c$g.names[1], v[[1]], sep = "_")
-    for (i in 2:20) {
-      micro.g.names <- c(micro.g.names, paste(c$g.names[i], v[[i]], sep = "_"))
-        }
-    bin.char <- function(x) { 
-      if_else(is.na(x), 0, 1) #function to binarize data
-        }
-    dend.micro <- cut(lclust.dend, h = 3) #cutting at microgenre level
-    edge.labs <- data.frame(id = ldist.res$edge.list[, 1],
-                            macro.g = ldist.res$edge.list[, 2], 
-                            edge.num = 1:nrow(ldist.res$edge.list)) #grabbing people and genre id labels
-    micro.g.clust <- lapply(dend.micro$lower, labels) %>%
-        lapply(data.frame) %>% 
-        bind_rows() #transforming clustering cut results into data frame
-    names(micro.g.clust) <- "edge.num" #adding column label
-    micro.g.long <- data.frame(micro.g = rep(1:102, sapply(dend.micro$lower, nleaves)))
-    micro.g.dat <- bind_cols(micro.g.clust, micro.g.long)
-    micro.g.dat <- right_join(micro.g.dat, edge.labs) %>%
-      mutate(micro.g.f = factor(micro.g, labels = micro.g.names),
-             macro.g.f = factor(macro.g, labels = names(colSums(taste.mat))),
-             micro.g.c = as.character(micro.g.f),
-             macro.g.c = as.character(macro.g.f)) %>% 
-      pivot_wider(id_cols = "id",
-                  names_from = "micro.g.c",
-                  values_from = "micro.g") %>% 
-      mutate(across(is.integer, bin.char)) %>% 
-      mutate(id = as.integer(id)) %>% 
-      arrange(id)
-```
-
-# Saving Objects
-```{r Remove garbage and keep important stuff}
-    b <- ls()[! ls() %in% c("ldist.res", "lclust.res", "dend.macro", "dend.micro", "lclust.dend", "micro.g.names", "n.micro", "taste.dat", "demog.dat", "micro.g.dat")]
+```{r Creating link by link distance matrix and saving results}
+    source(here("Functions", "link.dist.R"))
+    ldist.res <- link.dist(x = taste.mat, id = taste.dat$id)
+    b <- ls()[! ls() %in% "ldist.res"]
     rm(list = b)
     ls()
-```
-
-```{r Saving image}
     save.image(file= here("dat", "lclust-res.RData"))
 ```
+
+
+
 
