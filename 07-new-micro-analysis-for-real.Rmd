@@ -54,10 +54,15 @@
     lclust.dend <- as.dendrogram(lclust.res) #transforming link clustering into dendrogram
 ```
 
-```{r}
+```{r Custom Functions}
     source(here("Functions", "micro.genre.dat.R"))
     source(here("Functions", "demog.dat.R"))
     source(here("Functions", "genre.reg.mods.R"))
+    source(here("Functions", "pred.probs.R"))
+    source(here("Functions", "plot.preds.R"))
+```
+
+```{r}
     a <- demog.dat()
     summary(a)
     spec <- c("educ", "parcoll", "age.n", "blk", "his", "asn", "gender")
@@ -83,8 +88,7 @@
 ```
 
 ```{r}
-    source(here("Functions", "pred.probs.R"))
-    source(here("Functions", "plot.preds.R"))
+
     age.preds <- pred.probs(x = "age.n", res.latin$mods)
     p <- plot.preds(d = age.preds, 
                     xb = c(3, 7, 11),
