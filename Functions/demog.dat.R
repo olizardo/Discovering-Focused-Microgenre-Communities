@@ -3,14 +3,24 @@ demog.dat <- function() {
    x <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta", col_select = c("id", "nodipdeg", "hsged", "somcol", "aadeg", 
                                 "bach", "ma", "docprof", "raceeth", 
                                 "female", "age", "percclass", "incmid",
-                                "region", "parented")) %>% 
-      mutate(educ = case_when(nodipdeg == 1 ~ 1,
-                              hsged == 1 ~ 2,
-                              aadeg == 1 ~ 3,
-                              somcol == 1 ~ 4,
-                              bach == 1 ~ 5,
-                              ma == 1 ~ 6,
+                                "region", "parented", "empstat")) %>% 
+      rename(parcoll = parented) %>% 
+      mutate(educ = case_when(nodipdeg == 1 ~ 0 ,                          
+                              hsged == 1 ~ 1,
+                              aadeg == 1 ~ 2,
+                              somcol == 1 ~ 3,
+                              bach == 1 ~ 4,
+                              ma == 1 ~ 5,
                               docprof == 1 ~ 6),
+             region = case_when(region == 1 ~ 1,
+                                region == 2 ~ 1,
+                                region == 3 ~ 2,
+                                region == 4 ~ 3,
+                                region == 5 ~ 4,
+                                region == 6 ~ 4,
+                                region == 7 ~ 4,
+                                region == 8 ~ 5,
+                                region == 9 ~ 6),
              race = factor(raceeth, labels = c("Asian", 
                                                "Black", 
                                                "Hisp.", 
@@ -48,9 +58,41 @@ demog.dat <- function() {
                                   incmid == 185000 | incmid == 195000 |
                                   incmid == 212500 | incmid == 237500 ~ 5),
              gender = factor(female, labels = c("Men", "Women"))) %>%
-      mutate(age.n = as.numeric(age), age.n2 = as.numeric(age)^2) %>% 
-      mutate(objclass = factor(objclass, labels = c("Poor", "Working", "Middle", "Upper Middle", "High Income"))) %>% 
-      dplyr::select(c("id", "educ", "race", "gender", 
-                      "age.n", "age.n2", "subjclass", "objclass"))
+      mutate(age.n = as.numeric(age), 
+             age.n2 = as.numeric(age)^2,
+             region.f = factor(region, labels = c("Northeast", 
+                                                  "Midwest", 
+                                                  "Plains", 
+                                                  "South", 
+                                                  "Southwest", 
+                                                  "West")),
+             objclass = factor(objclass, labels = c("Poor", 
+                                                    "Working", 
+                                                    "Middle", 
+                                                    "Upper Middle", 
+                                                    "Upper")),
+             #educ.f = factor(educ, labels = c("< H.S.", 
+                                              #"H.S.", 
+                                              #"Assoc.", 
+                                              #"Some Coll.", 
+                                              #"Bachelors", 
+                                              #"Prof.Deg",
+                                             # "PhD"), ordered = TRUE),
+             college = if_else(educ >= 4, 1, 0),
+             working = if_else(empstat == 1, 1, 0),
+             student = if_else(empstat == 3, 1, 0),
+             retired = if_else(empstat == 8, 1, 0),
+             asn = if_else(raceeth == 1, 1, 0),
+             blk = if_else(raceeth == 2, 1, 0),
+             his = if_else(raceeth == 3, 1, 0),
+             mro = if_else(raceeth == 5 | race == 6, 1, 0),
+             wrk.c = if_else(percclass == 2, 1, 0),
+             mid.c = if_else(percclass == 3, 1, 0),
+             lo.inc = if_else(incmid <= 25000, 1, 0)
+             ) %>% 
+      dplyr::select(c("id", "educ", "gender", "age.n", "age.n2", "parcoll", 
+                      "incmid", "college", "working", "wrk.c", "mid.c",
+                      "student", "retired", "region.f", "lo.inc",
+                      "asn", "blk", "his", "mro"))
    return(x)
 }

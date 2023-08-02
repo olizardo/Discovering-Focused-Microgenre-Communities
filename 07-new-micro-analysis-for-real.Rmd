@@ -11,6 +11,7 @@
     knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
     library(conflicted)
     library(dendextend)
+    library(ggplot2)
     library(haven)
     library(here)
     library(sjPlot)
@@ -57,40 +58,45 @@
     source(here("Functions", "micro.genre.dat.R"))
     source(here("Functions", "demog.dat.R"))
     source(here("Functions", "genre.reg.mods.R"))
-    m <- genre.reg.mods("Country", k = 7,
-                        xvars = c("educ", "race", "gender", "age.n",
-                           "subjclass"))
-    tab_model(m, digits = 3, show.ci = FALSE, 
+    a <- demog.dat()
+    summary(a)
+    spec <- c("educ", "parcoll", "age.n", "blk", "his", "asn", "gender")
+    labs <- c("Intercept", "Education", "Parents College",
+                            "Age", "Race ID: Black", "Race ID: Hispanic",
+                            "Race ID: Asian", "Gender ID: Woman")
+    
+    res.latin <- genre.reg.mods("Latin", k = 4, xvars = spec)
+    res.metal <- genre.reg.mods("Heavy_Metal", k = 4, xvars = spec)
+    
+    tab_model(res.latin$mods, 
+              digits = 3, show.ci = FALSE, 
+              auto.label = FALSE, transform = NULL,
+              pred.labels = labs,
               file = here("Tabs", "reg-tab-latin.html"))
+    #webshot(here("Tabs", "reg-tab-latin.html"), here("Tabs", "reg-tab-latin.png"))
+    tab_model(res.metal$mods, 
+              digits = 3, show.ci = FALSE, 
+              auto.label = FALSE, transform = NULL,
+              pred.labels = labs,
+              file = here("Tabs", "reg-tab-metal.html"))
+    #webshot(here("Tabs", "reg-tab-metal.html"), here("Tabs", "reg-tab-metal.png"))
 ```
-
 
 ```{r}
-    source(here("Functions", "micro.genre.dat.R"))
-    source(here("Functions", "demog.dat.R"))
-    latin.micro <- micro.genre.dat("Latin", k = 6)$all %>% 
-      left_join(demog.dat())
-    head(latin.micro)
-    mod1 <- lm(as.numeric(Latin_1) ~ educ + race + gender + age.n, 
-               data = latin.micro)
-    mod2 <- lm(as.numeric(Latin_2) ~ educ + race + gender + age.n, 
-               data = latin.micro)
-    mod3 <- lm(as.numeric(Latin_3) ~ educ + race + gender + age.n, 
-               data = latin.micro)
-    mod4 <- lm(as.numeric(Latin_4) ~ educ + race + gender + age.n, 
-               data = latin.micro)
-    mod5 <- lm(as.numeric(Latin_5) ~ educ + race + gender + age.n, 
-               data = latin.micro)
-    mod6 <- lm(as.numeric(Latin_6) ~ educ + race + gender + age.n, 
-               data = latin.micro)
-    tab_model(mod1, mod2, mod3, mod4, mod5, mod6,
-                show.ci = FALSE, auto.label = FALSE, digits = 3,
-                #dv.labels = c(),
-                #rm.terms = c(), 
-                #pred.labels = c(), 
-                file = here("Tabs", "reg-tab-latin.html") 
-              )
-    #webshot(here("Tabs", "reg-tab-latin.html"), here("Tabs", "reg-latin-ASR.png"))
+    source(here("Functions", "pred.probs.R"))
+    source(here("Functions", "plot.preds.R"))
+    age.preds <- pred.probs(x = "age.n", res.latin$mods)
+    p <- plot.preds(d = age.preds, 
+                    xb = c(3, 7, 11),
+                    xlabs = c("Young", "Mid. Aged", "Old"),
+                    yl = .1, 
+                    xm = 2, 
+                    xl = 12)
+    p
 ```
+`
+  
+
+
 
 
