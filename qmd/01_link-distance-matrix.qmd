@@ -1,0 +1,61 @@
+---
+    title: "Discovering Focused Microgenre Communities: Link Clustering"
+    author: "Omar Lizardo"
+    date: "`r Sys.Date()`"
+---
+
+# Setup
+```{r setup}
+    knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
+    library(conflicted)
+    library(dendextend)
+    library(fastcluster)
+    library(here)   
+    library(haven)
+    library(tidyverse)
+```
+
+# Data Wrangling
+```{r Importing and creating two mode data frame of people by genres}
+    taste.dat <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta")
+    taste.dat <- taste.dat %>% 
+      dplyr::select("id", ends_with(c("lis", "like")), -starts_with("none")) %>% 
+      dplyr::select(c(1:41)) %>% 
+      na.omit() %>% 
+      mutate(Classical = classicallike * classicallis,
+             Opera = operalike * operalis,
+             Jazz = jazzlike * jazzlis,
+             Broadway = bwaystlike * bwaystlis,
+             Easy = moodezlike * moodezlis, 
+             Bigband = bbandlike * bbandlis,
+             Classic_Rock = croldlike * croldlis,
+             Country = countrylike * countrylis,
+             Bluegrass = blueglike * blueglis,
+             Folk = folklike * folklis,
+             Gospel = hymgoslike * hymgoslis,
+             Salsa = latlpsallike * latspsallis,
+             Rap_Hip_Hop = raphiphoplike * raphiphoplis,
+             Blues_RandB = blurblike * blurblis,
+             Reggae = reggaelike * reggaelis,
+             Pop = toppoplike * toppoplis,
+             Contemp_Rock = controcklike * controcklis,
+             Indie_Alt = indaltlike * indaltlis,
+             Dance_Club = danclublike * danclublis,
+             Metal = hvymtllike * hvymtllis
+             ) %>%  #people are linked to genres that the both like and listen to
+      dplyr::select(id, Classical:Metal)
+```
+
+# Link Clustering
+```{r Creating link by link distance matrix and saving results}
+    source(here("Functions", "link.dist.R"))
+    ldist.res <- link.dist(x = as.matrix(taste.dat[, 2:ncol(taste.dat)]), 
+                           id = taste.dat$id)
+    b <- ls()[! ls() %in% c("taste.dat", "ldist.res")]
+    rm(list = b)
+    save.image(file= here("dat", "lclust-res.RData"))
+```
+
+
+
+

@@ -1,0 +1,391 @@
+---
+  title: "Discovering Focused Microgenre Communities: Microgenre Analysis"
+  author: "Omar Lizardo"
+  date: "`r Sys.Date()`"
+  output:
+    html_document: default
+---
+
+# Setup
+```{r setup}
+    knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
+    require("factoextra")
+    require("FactoMineR")
+    require("gghighlight")
+    require("ggplot2")
+    require("ggrepel")
+    require("here")
+    require("patchwork")
+    require("sjPlot")
+    require("RColorBrewer")
+    require("tidyverse")
+    source(here("Functions", "pred.probs.R"))
+    source(here("Functions", "mpred.probs.R"))
+    source(here("Functions", "mfav.probs.R"))
+    source(here("Functions", "fav.probs.R"))
+```
+
+```{r Creating new person by micro-genre two mode network data}
+    load(file= here("dat", "lclust-res.RData"))
+```
+
+# Descriptive Plots
+```{r histogram of cluster size distribution}
+    micro.g.sizes <- colSums(micro.g.dat[, 2:ncol(micro.g.dat)])
+    hist.small <- data.frame(size = micro.g.sizes, micro.g = names(micro.g.sizes)) 
+    hist.big <- filter(hist.small, size >= 75)
+    p <- ggplot(data = hist.big, #histogram of genre community size distribution for communities with 75 or more members
+            mapping = aes(y = reorder(micro.g, size), x = size, fill = micro.g))
+    p <- p + geom_bar(stat = "identity")
+    p <- p + labs(x = "", y = "") 
+    p <- p + theme_sjplot2()
+    p.big <- p + theme(axis.text.y = element_text(size = 16), 
+                       axis.text.x = element_text(size = 16),
+                       legend.position = "none"
+    )
+    
+    p <- ggplot(data = hist.small, #full histogram of genre community size distribution
+                mapping = aes(y = reorder(micro.g, size), x = size))
+    p <- p + geom_bar(stat = "identity", color = "red", fill = "red")
+    p <- p + labs(x = "", y = "") 
+    p <- p + theme_minimal()
+    p.small <- p + theme(axis.text.y = element_blank(),
+                         plot.background = 
+                           element_rect(colour = "black", size = 0.45)
+    )
+    p <- p.big + inset_element(p.small, 0.7, 0.01, 1, 0.35) #inset plot using patchwork
+    p
+    save_plot(here("Plots", "Link Clust", "micro-genre-size-dist.png"), 
+              width = 35, height = 45)
+```
+
+# PCA Analysis 
+```{r PCA eigenvalue comparison of regular and link clustered data}
+    pca.macro <- PCA(taste.dat[, 2:ncol(taste.dat)], 
+                     ncp = 10, graph = FALSE)
+    eig.macro <- get_eig(pca.macro)[, 1]
+    pca.micro <- PCA(micro.g.dat[, 2:ncol(micro.g.dat)], 
+                     ncp = 50, graph = FALSE)
+    eig.micro <- get_eig(pca.micro)[, 1]
+    p <- fviz_eig(pca.macro, ncp = 10, choice = "eigenvalue") 
+    p <- p + geom_hline(yintercept = 1, color = "red")
+    p <- p + geom_vline(xintercept = length(eig.macro[eig.macro >= 1]))
+    p <- p + scale_y_continuous(breaks = seq(0, 8 , 1), limits = c(0,8))
+    p <- p + ggtitle("Macrogenres")
+    p <- p + theme(axis.text = element_text(size = 12))
+    p1 <- p + scale_x_discrete(breaks = seq(1, 10, by = 1))
+    
+    p <- fviz_eig(pca.micro, ncp = 50, choice = "eigenvalue") 
+    p <- p + geom_hline(yintercept = 1, color = "red")
+    p <- p + geom_vline(xintercept = length(eig.micro[eig.micro >= 1]))
+    p <- p + scale_y_continuous(breaks = seq(0, 8 , 1), limits = c(0,8))
+    p <- p + ggtitle("Microgenres")
+    p <- p + theme(axis.text = element_text(size = 12))
+    p2 <- p + scale_x_discrete(breaks = seq(0, 50, by = 5))
+    p1 + p2 + plot_annotation(title = "Scree Plot")
+    save_plot(here("Plots", "Link Clust", "macro-v-micro-pca-eig.png"), 
+              width = 25, height = 25)
+```
+
+```{r Clustering macrogenres on the main principal coordinates}
+    k.macro <- 4
+    clus.macro.dat <- data.frame(pca.macro$var$coord)[1:k.macro]
+    hc.macro <- eclust(clus.macro.dat, "hclust", 
+                       method = "ward.D2",
+                       k = k.macro, graph = FALSE)
+    clus.macro <- cbind(data.frame(cluster = hc.macro$cluster), 
+                        clus.macro.dat) 
+    clus.macro.centers <-  clus.macro %>% 
+      group_by(cluster) %>% 
+      summarize(across(starts_with("Dim"), mean)) %>% 
+      dplyr::select(-1)
+    clus.macro.centers
+    km.macro <- eclust(clus.macro.dat, 
+                       "kmeans", k = clus.macro.centers, graph = FALSE)
+    p <- fviz_cluster(km.macro, 
+                      ellipse = FALSE, 
+                      repel = TRUE,
+                      geom = "text",
+                      labelsize = 16)
+    p <- p + theme_sjplot()
+    p <- p + theme(legend.position = "none",
+                   axis.title = element_text(size = 14),
+                   axis.text = element_text(size = 14),
+                   axis.line = element_line(color = "white"))
+    p <- p + ggtitle("")
+    p <- p + geom_hline(yintercept = 0, color = "gray60")
+    p <- p + geom_vline(xintercept = 0, color = "gray60")
+    p 
+    save_plot(here("Plots", "Link Clust", "macro-pca-clust.png"), width = 25, height = 25)
+
+```
+
+```{r Clustering microgenres on the main principal coordinates}
+    k.micro <- 25
+    clus.micro.dat <- data.frame(pca.micro$var$coord)[1:k.micro]
+    hc.micro <- eclust(clus.micro.dat, "hclust", 
+                       method = "ward.D2",
+                       k = k.micro, graph = FALSE)
+    clus.micro <- cbind(data.frame(cluster = hc.micro$cluster), 
+                        clus.micro.dat) 
+    clus.micro.centers <-  clus.micro %>% 
+      group_by(cluster) %>% 
+      summarize(across(starts_with("Dim"), mean)) %>% 
+      dplyr::select(-1)
+    clus.micro.centers
+    km.micro <- eclust(clus.micro.dat, 
+                       "kmeans", k = clus.micro.centers, graph = FALSE)
+    p <- fviz_cluster(km.micro, 
+                      ellipse = FALSE, 
+                      repel = TRUE,
+                      geom = "text")
+    p <- p + theme_sjplot()
+    p <- p + theme(legend.position = "none",
+                   axis.title = element_text(size = 14),
+                   axis.text = element_text(size = 14),
+                   axis.line = element_line(color = "white"))
+    p <- p + ggtitle("")
+    p <- p + geom_hline(yintercept = 0, color = "gray60")
+    p <- p + geom_vline(xintercept = 0, color = "gray60")
+    p 
+    save_plot(here("Plots", "Link Clust", "micro-pca-clust.png"), 
+              width = 25, height = 25)
+```
+
+```{r Combining macro and micro-genre clusters into a single plot}
+    km.macro.dat <- data.frame(macro.cluster =  km.macro$cluster) 
+    km.macro.dat <- cbind(genre = rownames(km.macro.dat), km.macro.dat)
+    km.micro.dat <- data.frame(micro.cluster =  km.micro$cluster)
+    km.micro.dat <- cbind(genre = rownames(km.micro.dat), km.micro.dat)
+    km.micro.dat$genre <- gsub('[0-9.]', '', km.micro.dat$genre)
+    km.micro.dat$genre <- gsub('.{1}$', '', km.micro.dat$genre)
+    km.cluster.dat <- km.micro.dat %>% 
+      left_join(km.macro.dat) %>% 
+      mutate(micro.g = rownames(km.micro.dat))
+    km.cluster.dat
+    km.cluster.dat$macro.cluster <- factor(km.cluster.dat$macro.cluster, labels = c("Highbrow", "Country/Folk", "Afro/Pop", "Rock/Pop"))
+    km.cluster.dat$micro.cluster <- as.factor(km.cluster.dat$micro.cluster)
+    p <- ggplot(data = km.cluster.dat, 
+                mapping = aes(y = micro.cluster, x = macro.cluster))
+    p <- p + geom_text_repel(aes(label = micro.g, color = micro.cluster), size = 2)
+    p <- p + theme_minimal()
+    p <- p + theme(legend.position = "none")
+    p <- p + labs(x = "", y = "Microgenre Clusters")
+    p <- p + scale_y_discrete(limits=rev)
+    p <- p + scale_x_discrete(position = "top")
+    p
+    
+    save_plot(here("Plots", "Link Clust", "macro-v-micro-clust.png"), 
+              width = 15, height = 20)
+```
+
+# Classic Rock Case Study
+```{r Merging and analyzing data}
+    taste.demog.dat <- right_join(demog.dat, micro.g.dat) %>% 
+        right_join(taste.dat) %>% 
+        na.omit()
+    res <- mpred.probs("Classic_Rock", taste.demog.dat)
+```
+
+```{r Main Classic Rock demographic plot}
+    dat <- res$probs$Classic_Rock
+    b <- lm(Classic_Rock ~ 1, data = taste.demog.dat)$coefficients
+    con.x <- filter(dat, var.type == 1 | var.type == 3 | var.type == 4 | var.type == 5)
+    cat.x <- filter(dat, var.type == 2 | var.type == 6 | var.type == 7 | var.type == 8)
+    p <- ggplot(data = dat,
+                mapping = aes(x = cat.labs, y = prob, 
+                              fill = var.type, color = var.type, group = var.type))
+    p <- p + geom_hline(yintercept = b, color = "red", linewidth = 0.25)
+    p <- p + geom_point(size = 2.5)
+    p <- p + geom_line(data = con.x, linewidth = 0.75)
+    p <- p + geom_segment(data = cat.x,
+                          mapping = aes(y = lo, x = cat.labs, yend = hi, xend = cat.labs), 
+                          alpha = 0.2, linewidth = 1.15)
+    p <- p + geom_ribbon(data = con.x, 
+                         mapping = aes(ymin = lo, ymax = hi), 
+                         alpha = 0.15, linetype = 0)
+    p <- p + theme_sjplot()
+    p <- p + ggtitle("Classic Rock")
+    p <- p + theme(axis.title = element_blank(),
+                   legend.position = "none",
+                   title = element_text(size = 16))
+    p <- p + scale_x_discrete(limits=rev)
+    p <- p + expand_limits(y = c(0, NA))
+    p <- p + scale_color_brewer(palette = "Dark2")
+    p <- p + scale_fill_brewer(palette = "Dark2")
+    p <- p + coord_flip()
+    p
+    save_plot(here("Plots", "Link Clust", "classic-rock-macro-demog.png"), 
+              width = 15, height = 20)
+```
+
+```{r Classic Rock favorites plot}
+    classic.rock.favs <- mfav.probs(names(taste.dat[,2:ncol(taste.dat)]),
+                                              "Classic_Rock", taste.demog.dat)
+    wrap_plots(classic.rock.favs$plots[1:12], ncol = 3)
+    save_plot(here("Plots", "Link Clust", "classic-rock-fav.png"), 
+                  width = 30, height = 30)
+```
+
+```{r Classic Rock Age plot}
+    dat <- lapply(res$probs[1:12], transform, sc.prob = scale(prob))
+    dat <- bind_rows(dat, .id = "micro.gen") %>% 
+        mutate(micro.gen = factor(micro.gen)) %>%
+        filter(cat.labs %in% levels(demog.dat$age)) %>% 
+        as.tibble() %>% 
+        mutate(micro.gen = factor(micro.gen, levels = micro.g.names[1:12]))
+    p <- ggplot(data = dat, 
+                mapping = aes(y = sc.prob, x = cat.labs, 
+                              color = micro.gen, group =micro.gen))
+    p <- p + geom_hline(aes(yintercept = 0), linewidth = 1, color = "pink")
+    p <- p + geom_line(linewidth = 1.75)
+    p <- p + gghighlight(use_direct_label = FALSE,
+                         label_key = micro.gen,
+                         unhighlighted_params = list(color = "grey90", linewidth = 0.75))
+    p <- p + labs(x = "", y = "")
+    p <- p + theme_minimal()
+    p <- p + facet_wrap(~ micro.gen, nrow = 4)
+    p <- p + theme(legend.position = "none",
+                   strip.background = element_blank(),
+                   strip.text = element_text(size = 14))
+    p <- p + coord_flip()
+    p
+    sjPlot::save_plot(here("Plots", "Link Clust", "classic-rock-age.png"), 
+                      width = 25, height = 28)
+```
+
+```{r Classic Rock Class plot}
+    dat <- lapply(res$probs[1:12], transform, sc.prob = scale(prob))
+    dat <- bind_rows(dat, .id = "micro.gen") %>% 
+        mutate(micro.gen = factor(micro.gen)) %>%
+        filter(cat.labs %in% levels(demog.dat$objclass)) %>% 
+        as.tibble() %>% 
+        mutate(micro.gen = factor(micro.gen, levels = micro.g.names[1:12]))
+    p <- ggplot(data = dat, 
+                mapping = aes(y = sc.prob, x = cat.labs, 
+                              color = micro.gen, group =micro.gen))
+    p <- p + geom_hline(aes(yintercept = 0), linewidth = 1, color = "pink")
+    p <- p + geom_line(linewidth = 2)
+    p <- p + gghighlight(use_direct_label = FALSE,
+                         label_key = micro.gen,
+                         unhighlighted_params = list(color = "grey88", linewidth = 0.75))
+    p <- p + labs(x = "", y = "")
+    p <- p + theme_minimal()
+    p <- p + facet_wrap(~ micro.gen, nrow = 4)
+    p <- p + theme(legend.position = "none",
+                   strip.background = element_blank(),
+                   strip.text = element_text(size = 10))
+    p <- p + coord_flip()
+    p
+    sjPlot::save_plot(here("Plots", "Link Clust", "classic-rock-class.png"), 
+                      width = 25, height = 15)
+```
+
+```{r Classic Rock Education plot}
+    dat <- lapply(res$probs[1:12], transform, sc.prob = scale(prob))
+    dat <- bind_rows(dat, .id = "micro.gen") %>% 
+        mutate(micro.gen = factor(micro.gen)) %>%
+        filter(cat.labs %in% levels(demog.dat$educ)) %>% 
+        as.tibble() %>% 
+        mutate(micro.gen = factor(micro.gen, levels = micro.g.names[1:12]))
+    p <- ggplot(data = dat, 
+                mapping = aes(y = sc.prob, x = cat.labs, 
+                              color = micro.gen, group =micro.gen))
+    p <- p + geom_hline(aes(yintercept = 0), linewidth = 1, color = "pink")
+    p <- p + geom_line(linewidth = 2)
+    p <- p + gghighlight(use_direct_label = FALSE,
+                         label_key = micro.gen,
+                         unhighlighted_params = list(color = "grey88", linewidth = 0.75))
+    p <- p + labs(x = "", y = "")
+    p <- p + theme_minimal()
+    p <- p + facet_wrap(~ micro.gen, nrow = 4)
+    p <- p + theme(legend.position = "none",
+                   strip.background = element_blank(),
+                   strip.text = element_text(size = 10))
+    p <- p + coord_flip()
+    p
+    sjPlot::save_plot(here("Plots", "Link Clust", "classic-rock-educ.png"), 
+                      width = 25, height = 15)
+```
+
+```{r Classic Rock Gender plot}
+    dat <- lapply(res$probs[1:12], transform, sc.prob = scale(prob))
+    dat <- bind_rows(dat, .id = "micro.gen") %>% 
+        mutate(micro.gen = factor(micro.gen)) %>%
+        filter(cat.labs %in% levels(demog.dat$female)) %>% 
+        as.tibble() %>% 
+        mutate(micro.gen = factor(micro.gen, levels = micro.g.names[1:12]))
+    p <- ggplot(data = dat, 
+                mapping = aes(y = sc.prob, x = cat.labs, 
+                              color = micro.gen, group =micro.gen))
+    p <- p + geom_hline(aes(yintercept = 0), linewidth = 1, color = "pink")
+    p <- p + geom_point(size = 3)
+    p <- p + gghighlight(use_direct_label = FALSE,
+                         label_key = micro.gen,
+                         unhighlighted_params = list(color = "grey90", linewidth = 0.75))
+    p <- p + labs(x = "", y = "")
+    p <- p + theme_minimal()
+    p <- p + facet_wrap(~ micro.gen, nrow = 6)
+    p <- p + theme(legend.position = "none",
+                   strip.background = element_blank(),
+                   strip.text = element_text(size = 10))
+    p <- p + coord_flip()
+    p
+    sjPlot::save_plot(here("Plots", "Link Clust", "classic-rock-gender.png"), 
+                      width = 20, height = 15)
+```
+
+```{r Classic Rock Race plot}
+    dat <- lapply(res$probs[1:12], transform, sc.prob = scale(prob))
+    dat <- bind_rows(dat, .id = "micro.gen") %>% 
+        mutate(micro.gen = factor(micro.gen)) %>%
+        filter(cat.labs %in% levels(demog.dat$raceeth)) %>% 
+        filter(cat.labs != "Mult./Other") %>% 
+        as.tibble() %>% 
+        mutate(micro.gen = factor(micro.gen, levels = micro.g.names[1:12]))
+    p <- ggplot(data = dat, 
+                mapping = aes(y = sc.prob, x = cat.labs, 
+                              color = micro.gen, group =micro.gen))
+    p <- p + geom_hline(aes(yintercept = 0), linewidth = 1, color = "pink")
+    p <- p + geom_point(size = 3)
+    p <- p + gghighlight(use_direct_label = FALSE,
+                         label_key = micro.gen,
+                         unhighlighted_params = list(color = "grey90", linewidth = 0.75))
+    p <- p + labs(x = "", y = "")
+    p <- p + theme_minimal()
+    p <- p + facet_wrap(~ micro.gen, nrow = 6)
+    p <- p + theme(legend.position = "none",
+                   strip.background = element_blank(),
+                   strip.text = element_text(size = 10))
+    p <- p + coord_flip()
+    p
+    sjPlot::save_plot(here("Plots", "Link Clust", "classic-rock-race.png"), 
+                      width = 20, height = 18)
+```
+
+```{r Classic Rock Region plot}
+    dat <- lapply(res$probs[1:12], transform, sc.prob = scale(prob))
+    dat <- bind_rows(dat, .id = "micro.gen") %>% 
+        mutate(micro.gen = factor(micro.gen)) %>%
+        filter(cat.labs %in% levels(demog.dat$region)) %>% 
+        as.tibble() %>% 
+        mutate(micro.gen = factor(micro.gen, levels = micro.g.names[1:12]))
+    p <- ggplot(data = dat, 
+                mapping = aes(y = sc.prob, x = cat.labs, 
+                              color = micro.gen, group =micro.gen))
+    p <- p + geom_hline(aes(yintercept = 0), linewidth = 1, color = "pink")
+    p <- p + geom_point(size = 3)
+    p <- p + gghighlight(use_direct_label = FALSE,
+                         label_key = micro.gen,
+                         unhighlighted_params = list(color = "grey90", linewidth = 0.75))
+    p <- p + labs(x = "", y = "")
+    p <- p + theme_minimal()
+    p <- p + facet_wrap(~ micro.gen, nrow = 6)
+    p <- p + theme(legend.position = "none",
+                   strip.background = element_blank(),
+                   strip.text = element_text(size = 10))
+    p <- p + coord_flip()
+    p
+    sjPlot::save_plot(here("Plots", "Link Clust", "classic-rock-region.png"), 
+                      width = 20, height = 22)
+```
