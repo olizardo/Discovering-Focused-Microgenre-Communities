@@ -16,6 +16,7 @@
     library(here)
     library(sjPlot)
     library(tidyverse)
+    library(webshot)
     load(file= here("dat", "lclust-res.RData"))
 ```
 
@@ -54,7 +55,7 @@
     lclust.dend <- as.dendrogram(lclust.res) #transforming link clustering into dendrogram
 ```
 
-```{r Custom Functions}
+```{r Loading Custom Functions}
     source(here("Functions", "micro.genre.dat.R"))
     source(here("Functions", "demog.dat.R"))
     source(here("Functions", "genre.reg.mods.R"))
@@ -62,12 +63,12 @@
     source(here("Functions", "plot.preds.R"))
 ```
 
-```{r}
-    a <- demog.dat()
-    summary(a)
-    spec <- c("educ", "parcoll", "age.n", "blk", "his", "asn", "gender")
+```{r Microgenre Regression Moldes}
+    spec <- c("poly(educ, 2)", "parcoll", "poly(age.n, 2)", 
+              "blk", "his", "asn", "gender")
     labs <- c("Intercept", "Education", "Parents College",
-                            "Age", "Race ID: Black", "Race ID: Hispanic",
+                            "Age", "Age-Squared", 
+                            "Race ID: Black", "Race ID: Hispanic",
                             "Race ID: Asian", "Gender ID: Woman")
     
     res.latin <- genre.reg.mods("Latin", k = 4, xvars = spec)
@@ -78,17 +79,17 @@
               auto.label = FALSE, transform = NULL,
               pred.labels = labs,
               file = here("Tabs", "reg-tab-latin.html"))
-    #webshot(here("Tabs", "reg-tab-latin.html"), here("Tabs", "reg-tab-latin.png"))
+    webshot(here("Tabs", "reg-tab-latin.html"), here("Tabs", "reg-tab-latin.png"))
+    
     tab_model(res.metal$mods, 
               digits = 3, show.ci = FALSE, 
               auto.label = FALSE, transform = NULL,
               pred.labels = labs,
               file = here("Tabs", "reg-tab-metal.html"))
-    #webshot(here("Tabs", "reg-tab-metal.html"), here("Tabs", "reg-tab-metal.png"))
+    webshot(here("Tabs", "reg-tab-metal.html"), here("Tabs", "reg-tab-metal.png"))
 ```
 
-```{r}
-
+```{r Microgenre Regression Plots (Age)}
     age.preds <- pred.probs(x = "age.n", res.latin$mods)
     p <- plot.preds(d = age.preds, 
                     xb = c(3, 7, 11),
@@ -96,7 +97,20 @@
                     yl = .1, 
                     xm = 2, 
                     xl = 12)
-    p
+    save_plot(filename = here("Plots", "Demog", "micro-by-age-latin.png"), 
+              fig = p,
+              height = 25, width = 20)
+    
+    age.preds <- pred.probs(x = "age.n", res.metal$mods)
+    p <- plot.preds(d = age.preds, 
+                    xb = c(3, 7, 11),
+                    xlabs = c("Young", "Mid. Aged", "Old"),
+                    yl = .1, 
+                    xm = 2, 
+                    xl = 12)
+    save_plot(filename = here("Plots", "Demog", "micro-by-age-metal.png"), 
+              fig = p,
+              height = 25, width = 20)
 ```
 `
   

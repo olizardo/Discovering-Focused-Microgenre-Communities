@@ -1,5 +1,4 @@
 genre.reg.mods <- function(genre, xvars, k = 3) {
-   library(estimatr)
    rec.taste <- function(x) {
       x = case_when(x == 1 ~ 0, x == 2 ~ 1)
       }
@@ -14,9 +13,8 @@ genre.reg.mods <- function(genre, xvars, k = 3) {
    # USER-DEFINED METHOD TO PROCESS DIFFERENT DEP VAR
    run_model <- function(dep.var) {
       fml <- reformulate(xvars, dep.var)
-      glm(fml, data = genre.micro, family = "binomial")
-      #lm(fml, data = genre.micro)
-      #lm_robust(fml, data = genre.micro)
+      #glm(fml, data = na.omit(genre.micro), family = "binomial")
+      lm(fml, data = na.omit(genre.micro))
       }
    # NAMED LIST OF MODELS
    mods <- sapply(dep.vars, run_model, simplify = FALSE)
