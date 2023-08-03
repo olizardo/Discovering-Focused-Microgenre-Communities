@@ -66,32 +66,32 @@ I address the microgenre issue using a technique for overlapping community detec
 \begin{figure}[ht!]
      \centering
      \begin{subfigure}[b]{0.6\textwidth}
-        \includegraphics[width=1.0\textwidth]{Figs/Toy/link-clust-toy1.png}
+        \includegraphics[width=1.0\textwidth]{Toy/link-clust-toy1.png}
         \caption{Two person-genre edges sharing the same genre.}
         \label{fig:link-toy1}
     \end{subfigure} 
      \begin{subfigure}[b]{0.3\textwidth}
-        \includegraphics[width=1.0\textwidth]{Figs/Toy/link-clust-toy2.png}
+        \includegraphics[width=1.0\textwidth]{Toy/link-clust-toy2.png}
         \caption{Similarity between person-genre edges depends on the other genres people are linked to.}
         \label{fig:link-toy2}
     \end{subfigure}
-     \begin{subfigure}[b]{0.45\textwidth}
-        \includegraphics[width=1.0\textwidth]{Figs/Toy/link-clust-toy3.png}
+     \begin{subfigure}[b]{0.5\textwidth}
+        \includegraphics[width=1.0\textwidth]{Toy/toy-sim.png}
         \caption{Edge similarity matrix from toy example.}
-        \label{fig:link-toy3}
+        \label{fig:toy-sim}
     \end{subfigure}
-     \begin{subfigure}[b]{0.45\textwidth}
-        \includegraphics[width=1.0\textwidth]{Figs/Toy/link-clust-toy4.png}
+     \begin{subfigure}[b]{0.5\textwidth}
+        \includegraphics[width=1.0\textwidth]{Toy/toy-dis.png}
         \caption{Edge distance matrix from toy example.}
-        \label{fig:link-toy4}
+        \label{fig:toy-dis}
     \end{subfigure}
      \begin{subfigure}[b]{0.6\textwidth}
-        \includegraphics[width=1.0\textwidth]{Figs/Toy/link-clust-toy5.png}
+        \includegraphics[width=1.0\textwidth]{Toy/link-clust-toy.png}
         \caption{Dendrogram from Ward clustering of toy example edge distance matrix cut at four clusters.}
-        \label{fig:link-toy5}
+        \label{fig:link-toy}
     \end{subfigure}
     \caption{Toy illustration of how the link clustering approach works.}
-    \label{fig:link-toy}
+    \label{fig:link-toy-ex}
  \end{figure}
  
 How does this work? As Figure~\ref{fig:link-toy1} shows, once we string out the original two-mode person-by-network in our toy example into an edge list (now containing eleven person-genre edges), where the cases are the person to genre pairs that are marked by a ``1'' in the original matrix, it is possible to ask: ``How similar is one edge to another?'' We can answer that question as follows. The similarity of one person-to-genre edge to another, when both edges point to the same genre \citep{ahn_etal10}, should be proportional to the overlap between the ``cultural ego networks'' of the two people at the tail end of the edges. As \citet{lizardo14} defines it, for any respondent $i$, in a survey on cultural taste, the cultural ego network is simply the set of genres $\{G_1, G_2,\dots G_k\}$ chosen by the person. 
@@ -111,43 +111,31 @@ The resulting dendrogram from the cluster analysis is shown in Figure~\ref{fig:l
 \begin{figure}[ht!]
      \begin{subfigure}[b]{0.5\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/all-branches-macro.png}
+        \includegraphics[width=1.0\textwidth]{Plots/Dend/all-branches-macro.png}
         \caption{c = 8, k = 20}
         \label{fig:dend-macro}
     \end{subfigure} 
      \begin{subfigure}[b]{0.5\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/all-branches-macro-labels.png}
+        \includegraphics[width=1.0\textwidth]{Plots/Dend/all-branches-macro-labels.png}
         \caption{c = 8, k = 20}
         \label{fig:dend-macro-labels}
     \end{subfigure} 
-     \begin{subfigure}[b]{0.5\textwidth}
-        \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/all-branches-micro.png}
-        \caption{c = 3, k = 102}
-        \label{fig:dend-micro}
-    \end{subfigure} 
-     \begin{subfigure}[b]{0.5\textwidth}
-        \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/all-branches-micro-labels.png}
-        \caption{c = 3, k = 102}
-        \label{fig:dend-micro-labels}
-    \end{subfigure}
      \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/classic-rock-branches.png}
+        \includegraphics[width=1.0\textwidth]{Plots/Dend/classic-rock-branches.png}
         \caption{c = 3, k = 12}
         \label{fig:dend-micro-classic-rock}
     \end{subfigure} 
      \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/blues-branches.png}
+        \includegraphics[width=1.0\textwidth]{Plots/Dend/blues-branches.png}
         \caption{c = 3, k = 5}
         \label{fig:dend-micro-blues}
     \end{subfigure}
      \begin{subfigure}[b]{0.32\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Figs/Dend/opera-branches.png}
+        \includegraphics[width=1.0\textwidth]{Plots/Dend/opera-branches.png}
         \caption{c = 3, k = 2}
         \label{fig:dend-micro-opera}
     \end{subfigure}
