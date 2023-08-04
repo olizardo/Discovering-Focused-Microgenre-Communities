@@ -12,7 +12,7 @@ plot.preds <- function(d, xb, xlabs, ym = 0, yl, r.alpha = .1, p.size = 3, xm, x
    p <- p + theme(legend.position = "top",
                   legend.title = element_blank(),
                   axis.title = element_blank(),
-                  axis.text = element_text(size = 12),
-                  legend.text = element_text(size = 12))
+                  axis.text = element_text(size = 16),
+                  legend.text = element_text(size = 14))
    return(p)
    }
