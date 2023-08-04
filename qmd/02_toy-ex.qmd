@@ -7,16 +7,18 @@ date: "`r Sys.Date()`"
 # Setup
 ```{r setup}
     knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
-    library("conflicted")
-    library("factoextra")
-    library("here")
-    library("ggplot2")
-    library("sjPlot")
+    library(conflicted)
+    library(factoextra)
+    library(here)
+    library(kableExtra)
+    library(ggplot2)
+    library(sjPlot)
+    library(webshot)
     source(here("Functions", "link.dist.R"))
 ```
 
 # Link Clustering (Toy Example)
-```{r Link Clustering toy example}
+```{r Link Clustering Toy Example}
     x <- c(0, 1, 1, 0, 
            0, 0, 0, 1, 
            1, 1, 1, 1, 
@@ -26,9 +28,33 @@ date: "`r Sys.Date()`"
     ldist.res <- link.dist(x = x, id = c(1:5)) #link distance matrix
     hc.res <- hclust(ldist.res$dist, method = "ward.D2") #link clustering
 ```
+
+```{r Creating Similarity and Distance Matrices}
+    e.names <- c("P1-G2", "P1-G3", "P2-G4", "P3-G1", 
+                 "P3-G2", "P3-G3", "P3-G4", "P4-G1", 
+                 "P4-G4", "P5-G3", "P5-G4")
+    
+    a <- round(ldist.res$sim, 2)
+    b <- round(as.matrix(ldist.res$dist), 2)
+    rownames(a) <- e.names
+    colnames(a) <- e.names
+    rownames(b) <- e.names
+    colnames(b) <- e.names
+    
+    kbl(a, format = "html", padding = 2, align = "c") %>% 
+        column_spec(1, bold = TRUE) %>% 
+        save_kable(here("Toy", "toy-sim.png"))
+    #webshot(here("Toy", "toy-sim.html"), here("Toy", "toy-sim.png"))
+    
+    kbl(b, format = "html", padding = 2, align = "c") %>% 
+        column_spec(1, bold = TRUE) %>% 
+        save_kable(here("Toy", "toy-dis.png"))
+    #webshot(here("Toy", "toy-dis.html"), here("Toy", "toy-dis.png"))
+```
+
     
 ```{r Plotting toy example dendrogram}
-    hc.res$labels <- c("P1-G2", "P1-G3", "P2-G4", "P3-G1", "P3-G2", "P3-G3", "P3-G4", "P4-G1", "P4-G4", "P5-G3", "P5-G4")
+    hc.res$labels <- e.names
     p <- fviz_dend(hc.res, k = 4, k_colors = "uchicago", show_labels = TRUE, cex = 1.5, lwd = 2) 
     p <- p + geom_hline(yintercept = 0.75, 
                         linetype = "dashed", 
@@ -37,6 +63,6 @@ date: "`r Sys.Date()`"
     p <- p + labs(y = "", title = "") 
     p <- p + theme(axis.line.y = element_blank(), axis.text.y = element_blank())
     p
-    save_plot(here("Plots", "Toy", "link-clust-toy5.png"), 
+    save_plot(here("Toy", "link-clust-toy.png"), 
               width = 40, height = 25)
 ```

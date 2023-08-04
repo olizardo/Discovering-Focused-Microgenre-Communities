@@ -20,41 +20,6 @@
     load(file= here("dat", "lclust-res.RData"))
 ```
 
-```{r Importing and creating two mode data frame of people by genres}
-    taste.dat <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta")
-    taste.dat <- taste.dat %>% 
-      dplyr::select("id", ends_with(c("lis", "like")), -starts_with("none")) %>% 
-      dplyr::select(c(1:41)) %>% 
-      na.omit() %>% 
-      mutate(Classical = classicallike * classicallis,
-             Opera = operalike * operalis,
-             Jazz = jazzlike * jazzlis,
-             Broadway = bwaystlike * bwaystlis,
-             Easy = moodezlike * moodezlis, 
-             Bigband = bbandlike * bbandlis,
-             Classic_Rock = croldlike * croldlis,
-             Country = countrylike * countrylis,
-             Bluegrass = blueglike * blueglis,
-             Folk = folklike * folklis,
-             Gospel = hymgoslike * hymgoslis,
-             Latin = latlpsallike * latspsallis,
-             Rap_Hip_Hop = raphiphoplike * raphiphoplis,
-             Blues_RandB = blurblike * blurblis,
-             Reggae = reggaelike * reggaelis,
-             Pop = toppoplike * toppoplis,
-             Contemp_Rock = controcklike * controcklis,
-             Indie_Alt = indaltlike * indaltlis,
-             Dance_Club = danclublike * danclublis,
-             Heavy_Metal = hvymtllike * hvymtllis
-             ) %>%  #people are linked to genres that the both like and listen to
-      dplyr::select(id, Classical:Heavy_Metal)
-```
-
-```{r Performing Link Clustering}
-    lclust.res <- hclust(ldist.res$dist, method = "ward.D2") #clustering of link by link distance matrixco
-    lclust.dend <- as.dendrogram(lclust.res) #transforming link clustering into dendrogram
-```
-
 ```{r Loading Custom Functions}
     source(here("Functions", "micro.genre.dat.R"))
     source(here("Functions", "demog.dat.R"))
@@ -63,23 +28,21 @@
     source(here("Functions", "plot.preds.R"))
 ```
 
-```{r Microgenre Regression Moldes}
-    spec <- c("poly(educ, 2)", "parcoll", "poly(age.n, 2)", 
+```{r Performing Link Clustering}
+    lclust.res <- hclust(ldist.res$dist, method = "ward.D2") #clustering of link by link distance matrix
+    lclust.dend <- as.dendrogram(lclust.res) #transforming link clustering into dendrogram
+```
+
+```{r Microgenre Regression Models}
+    spec <- c("educ", "parcoll", "poly(age.n, 2)", 
               "blk", "his", "asn", "gender")
     labs <- c("Intercept", "Education", "Parents College",
                             "Age", "Age-Squared", 
                             "Race ID: Black", "Race ID: Hispanic",
                             "Race ID: Asian", "Gender ID: Woman")
     
-    res.latin <- genre.reg.mods("Latin", k = 4, xvars = spec)
-    res.metal <- genre.reg.mods("Heavy_Metal", k = 4, xvars = spec)
-    
-    tab_model(res.latin$mods, 
-              digits = 3, show.ci = FALSE, 
-              auto.label = FALSE, transform = NULL,
-              pred.labels = labs,
-              file = here("Tabs", "reg-tab-latin.html"))
-    webshot(here("Tabs", "reg-tab-latin.html"), here("Tabs", "reg-tab-latin.png"))
+    res.metal <- genre.reg.mods("Metal", k = 3, xvars = spec)
+    res.salsa <- genre.reg.mods("Salsa", k = 3, xvars = spec)
     
     tab_model(res.metal$mods, 
               digits = 3, show.ci = FALSE, 
@@ -87,28 +50,38 @@
               pred.labels = labs,
               file = here("Tabs", "reg-tab-metal.html"))
     webshot(here("Tabs", "reg-tab-metal.html"), here("Tabs", "reg-tab-metal.png"))
+    
+    tab_model(res.salsa$mods, 
+              digits = 3, show.ci = FALSE, 
+              auto.label = FALSE, transform = NULL,
+              pred.labels = labs,
+              file = here("Tabs", "reg-tab-salsa.html"))
+    webshot(here("Tabs", "reg-tab-salsa.html"), here("Tabs", "reg-tab-salsa.png"))
+    
 ```
 
 ```{r Microgenre Regression Plots (Age)}
-    age.preds <- pred.probs(x = "age.n", res.latin$mods)
-    p <- plot.preds(d = age.preds, 
-                    xb = c(3, 7, 11),
-                    xlabs = c("Young", "Mid. Aged", "Old"),
-                    yl = .1, 
-                    xm = 2, 
-                    xl = 12)
-    save_plot(filename = here("Plots", "Demog", "micro-by-age-latin.png"), 
-              fig = p,
-              height = 25, width = 20)
-    
     age.preds <- pred.probs(x = "age.n", res.metal$mods)
     p <- plot.preds(d = age.preds, 
                     xb = c(3, 7, 11),
                     xlabs = c("Young", "Mid. Aged", "Old"),
-                    yl = .1, 
+                    ym = -0.02,
+                    yl = .2, 
                     xm = 2, 
                     xl = 12)
-    save_plot(filename = here("Plots", "Demog", "micro-by-age-metal.png"), 
+    save_plot(filename = here("Plots", "Micro", "micro-by-age-metal.png"), 
+              fig = p,
+              height = 25, width = 20)
+    
+    age.preds <- pred.probs(x = "age.n", res.salsa$mods)
+    p <- plot.preds(d = age.preds, 
+                    xb = c(3, 7, 11),
+                    xlabs = c("Young", "Mid. Aged", "Old"),
+                    ym = -0.02,
+                    yl = .16, 
+                    xm = 2, 
+                    xl = 12)
+    save_plot(filename = here("Plots", "Micro", "micro-by-age-salsa.png"), 
               fig = p,
               height = 25, width = 20)
 ```
