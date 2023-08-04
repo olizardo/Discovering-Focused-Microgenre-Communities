@@ -75,12 +75,12 @@ I address the microgenre issue using a technique for overlapping community detec
         \caption{Similarity between person-genre edges depends on the other genres people are linked to.}
         \label{fig:link-toy2}
     \end{subfigure}
-     \begin{subfigure}[b]{0.5\textwidth}
+     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=1.0\textwidth]{Toy/toy-sim.png}
         \caption{Edge similarity matrix from toy example.}
         \label{fig:toy-sim}
     \end{subfigure}
-     \begin{subfigure}[b]{0.5\textwidth}
+     \begin{subfigure}[b]{0.45\textwidth}
         \includegraphics[width=1.0\textwidth]{Toy/toy-dis.png}
         \caption{Edge distance matrix from toy example.}
         \label{fig:toy-dis}
@@ -173,18 +173,35 @@ Tampubolon's argument regarding Metal dovetail with those preferred by Lizardo a
 So, will the real heavy metal please stand up? Is Metal a form of emerging cultural capital with potential appeal to young middle-class people or a genre heavily favored by white men with low education? Or is that an outdated picture of the American musical field? Is Metal even correlated with status markers like education at all, as Tampubolon suggested? Is speaking of Metal as a ``youth'' music accurate, or has its audience been aging along with the genre (going on more than four decades and counting)? Given prior work, a strong expectation is that, at the very least, we should observe a microgenre partition separating the ``prototypical'' Metal (appealing to low-education white men) and perhaps a less-prototypical one, appealing to younger audiences with high-level cultural capital with other micro-variations, perhaps track generational distinction \citep{lizardo_skiles15}.
 
 \begin{figure}[ht!]
-    \centering    
-    \includegraphics[width=1.5\textwidth]{Tabs/reg-tab-metal.png}
-    \caption{}
-    \label{tab:reg-metal}
+     \begin{subfigure}[b]{1.0\textwidth}
+        \centering    
+        \includegraphics[width=1.0\textwidth]{Tabs/reg-tab-metal.png}
+        \caption{}
+        \label{tab:reg-metal}
+    \end{subfigure} \\
+     \begin{subfigure}[b]{1.0\textwidth}
+        \centering    
+        \includegraphics[width=1.0\textwidth]{Tabs/reg-tab-latin.png}
+        \caption{}
+        \label{tab:reg-latin}
+    \end{subfigure}
 \end{figure}
     
 To examine these questions, I partitioned the Heavy-Metal branch of the dendrogram, at a height that resulted in four microgenre variations. To explore the issue of audience segmentation, I specify a linear probability regression model with five outcomes: First, a binary variable indicating that a person chose (liked and listened to) the standard macrogenre label (Heavy Metal), and then four models with the microgenre variations as the outcome (Heavy Metal one through four). The results are shown in Table~\ref{tab:reg-metal}. The main predictors are the respondent's education, an indicator variable for whether at least one of the respondent's parents has a college degree, the respondent's age, racial identification (in five categories), and gender identification (in two categories). Because the age effect is specified using a squared polynomial, it can be hard to interpret its substantive significance. To help with this, I show the predicted probabilities obtained for the model at different age values for the four different microgenres in Figure~\ref{fig:age-metal}.
 
 \begin{figure}[ht!]
-    \centering    \includegraphics[width=1.0\textwidth]{Plots/Demog/micro-by-age-metal.png}
-    \caption{}
-    \label{fig:age-metal}
+     \begin{subfigure}[b]{0.45\textwidth}
+        \centering    
+        \includegraphics[width=1.0\textwidth]{Plots/Micro/micro-by-age-metal.png}
+        \caption{}
+        \label{fig:age-metal}
+    \end{subfigure}
+     \begin{subfigure}[b]{0.45\textwidth}
+        \centering    
+        \includegraphics[width=1.0\textwidth]{Plots/Micro/micro-by-age-latin.png}
+        \caption{}
+        \label{fig:age-latin}
+    \end{subfigure}
 \end{figure}
 
 As shown in the first model, the socio-demographic predictors of choosing the ``Heavy Metal'' macrogenre label are the ones we would expect from Bryson's original work and the stereotypical perception of the genre's audience held by Americans. Metal fans are less likely to have high levels of education, are less likely to be older, are more likely to be white (negative effects for all other racial identifications compared to the base category), and are more likely to be men ($p<0.01$). So much for the emerging cultural capital story?
@@ -198,25 +215,12 @@ The Salsa music genre has not had as storied a career in the sociology of taste 
 
 Bachmayer et al. elicited a list of performers by asking experts to freely name performers and bands and then classify the music typical of the named acts into an ordinal rank based on their judgments of aesthetic quality (``superior,'', ``middlebrow,'' ``inferior''). They then selected the eight artists who were mentioned by at least three of the four expert informants and who displayed a high degree of concordance across experts in terms of their aesthetic rank. The eight compositions the experts judged to be typical of each artist's output were selected for guided interviews with forty first-generation Latinx immigrants in the Netherlands and Switzerland (there were no relevant cross-country differences). The most highly regarded expert pieces belonged to the sub-genre ``classic salsa,''---essentially early salsa performers that set the standard in the 1960s, 1970s, and 1980s---the middlebrow pieces were mainly variants of ``romantic salsa.'' The less aesthetically worthy pieces generally belonged to more recent styles of ``pop salsa styles.'' Note that this establishes a strict alignment between microgenre aesthetic standing and the historical sequencing of microgenre emergence within the salsa musicworld. We should thus expect this to be reflected in the generational location of each microgenre audience.
 
-\begin{figure}[ht!]
-    \centering    
-    \includegraphics[width=1.5\textwidth]{Tabs/reg-tab-latin.png}
-    \caption{}
-    \label{tab:reg-latin}
-\end{figure}
-
 What did \citet{Bachmayer2014-pk} find? The short answer is that they found a microcosm of a Bourdieusian world---with some wrinkles. More educated respondents gravitated towards classic salsa and explicitly denigrated audiences that went for more popular styles---enacting a version of Ien Ang's \citeyearpar{ang2000dallas} ``ideology of mass culture'' in this field. High status respondents emphasized compositional and thematic complexity over ``fun'' aspects like rhythm and ``danceability,'' elements crucial in working-class Latinx immigrants' explanations for why they gravitated towards more romantic and pop styles (finding classic salsa sleepy and boring). Importantly, ``expert consumers'' (people who worked in the musical field in some capacity) demonstrated the same aestheticized appreciation for classic salsa and denigration of popular styles regardless of their class background. \citep[][62]{Bachmayer2014-pk} conclude that ``[t]aste in salsa music shows a strong internal, hierarchical order between `artistic' versus `popular' styles that \ldots structures the taste patterns of different social classes.'' 
 
 This means that, at a minimum, we should expect the Salsa microgenres elicited by the link clustering procedure to reflect this hierarchical divide, with a microgenre more likely to be preferred by high-status respondents, particularly the higher-educated---the status marker that was most crucial in Bachmayer et al.'s study. 
 
 \subsubsection{Salsa Microgenre Analysis}
 Table~\ref{tab:reg-latin} shows the result of a regression analysis analogous to that I specified for the Metal microgenres. The first column shows a model predicting choosing the ``Latin/Spanish/Salsa" macrogenre label using the usual socio-demographic covariates. The next three columns show the predictors of choosing each microgenre variation extracted from cutting the macrogenre label branch of the dendrogram at the required height. Looking at the first column, we would have concluded that choosing Salsa is not predicted by either respondent's ($p = 0.26$) or parent's ($0.17$) education, suggesting that taste for this genre is orthogonal to cultural capital and status. Instead, Salsa is mainly a genre preferred by young respondents (negative linear effect of age) who identify as Hispanic (no surprise there) and as women ($p < 0.05$). 
-
-\begin{figure}[ht!]
-    \centering    \includegraphics[width=1.0\textwidth]{Plots/Demog/micro-by-age-latin.png}
-    \caption{}
-    \label{fig:age-salsa}
-\end{figure}
 
 The microgenre analysis tells a different story. Looking at the third column of the table, predicting choice for the second of the induced microgenres, we find that, indeed, there is a micro-variation that is statistically more likely to be preferred by people of high education whose parents are also more likely to be highly educated ($p < 0.05$). Moreover, the age effect on the choice of this microgenre is \textit{reversed} compared to baseline expectations from the macrogenre regression. This microgenre is more likely to be preferred by older respondents (see Figure~\ref{fig:age-salsa}). In this way, this microgenre contrasts strongly with the first one extracted by the link clustering procedure, which is overwhelmingly more likely to be preferred by younger respondents. These results point to two conclusions: First, there is hierarchical differentiation among microgenres extracted from the ``Latin/Spanish/Salsa'' macrogenre, with one microgenre standing out by its exclusive appeal to high-cultural-capital respondents. Second, this hierarchical differentiation is keyed to age, consistent with the idea that the most prestigious Salsa microgenre is also the ``oldest'' and most traditional \citep{Bachmayer2014-pk}.
 
