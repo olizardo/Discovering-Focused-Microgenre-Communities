@@ -12,7 +12,6 @@
     library(conflicted)
     library(dendextend)
     library(ggplot2)
-    library(haven)
     library(here)
     library(sjPlot)
     library(tidyverse)
@@ -64,7 +63,7 @@
     age.preds <- pred.probs(x = "age.n", res.metal$mods)
     p <- plot.preds(d = age.preds, 
                     xb = c(3, 7, 11),
-                    xlabs = c("Young", "Mid. Aged", "Old"),
+                    xlabs = c("Young", "Middle Aged", "Old"),
                     ym = -0.02,
                     yl = .2, 
                     xm = 2, 
@@ -76,7 +75,7 @@
     age.preds <- pred.probs(x = "age.n", res.salsa$mods)
     p <- plot.preds(d = age.preds, 
                     xb = c(3, 7, 11),
-                    xlabs = c("Young", "Mid. Aged", "Old"),
+                    xlabs = c("Young", "Middle Aged", "Old"),
                     ym = -0.02,
                     yl = .16, 
                     xm = 2, 

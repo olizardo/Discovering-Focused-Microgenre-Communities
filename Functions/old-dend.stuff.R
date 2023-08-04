@@ -1,4 +1,3 @@
-```{r Creating objects for analysis}
 dend.macro <- cut(lclust.dend, h = 8) #cutting at macrogenre level
 a <- data.frame(g.size = sapply(dend.macro$lower, nleaves)) #macrogenres as ordered in dendrogram results
 b <- data.frame(g.size = colSums(taste.mat), g.names = names(colSums(taste.mat))) #original macrogenre sizes
@@ -34,4 +33,28 @@ micro.g.dat <- right_join(micro.g.dat, edge.labs) %>%
    mutate(across(is.integer, bin.char)) %>% 
    mutate(id = as.integer(id)) %>% 
    arrange(id)
-```
+
+k <- length(dend.micro$lower)
+png(here("Plots", "Dend", "all-branches-micro.png"), height = 900, width = 1600)
+k <- length(dend.micro$lower)
+d <- lclust.dend
+d %>% 
+   set("labels", c(rep("", nleaves(d)))) %>% 
+   set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+   set("branches_lwd", value = 3) %>%
+   plot(axes = FALSE) %>% 
+   abline(h = 3, col="red", lty = 2, lwd = 3) 
+
+k <- length(dend.micro$lower)
+png(here("Plots", "Dend", "all-branches-micro-labels.png"), height = 900, width = 1600)
+d <- dend.micro$upper
+d %>% 
+   set("labels", micro.g.names) %>% 
+   set("branches_k_color", value = brewer.pal(k, "Dark2"), k = k) %>% 
+   set("branches_lwd", value = 3) %>% 
+   set("labels_color", value = brewer.pal(k, "Dark2")) %>% 
+   set("labels_cex", value = 0.9) %>% 
+   plot(axes = FALSE) 
+par(cex= 2.5)
+title(xlab="", ylab="", main="") %>% 
+   abline(h = 3, col="red", lty = 2, lwd = 3)
