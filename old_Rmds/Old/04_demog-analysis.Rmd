@@ -1,0 +1,307 @@
+---
+title: "Demographic Analysis of Microgenres Communities"
+author: "Omar Lizardo"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+    knitr::opts_chunk$set(include = TRUE)
+    knitr::opts_chunk$set(message = FALSE)
+    knitr::opts_chunk$set(warning = FALSE)
+    load(file = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/taste.comm.RData")
+```
+
+```{r loading required packages}
+    library("tidyverse")
+    library("haven")
+    library("prediction")
+    library("cowplot")
+```
+
+```{r import data and select demographic variables}
+    #importing data
+    demog.dat <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta")
+     #replacing ids with character names
+    demog.dat <- bind_cols(tibble(id_char = paste("id", sapply(demog.dat[, 1], as.character), sep = "_")), demog.dat)
+    demog.dat <- select(demog.dat, c("id_char", "age","female", "raceeth", "nodipdeg", "hsged", "somcol", "aadeg", "bach", "ma", "docprof","income", "percclass", "region", "occ"))
+    demog.dat <- demog.dat %>% 
+        mutate(Degree = ifelse(nodipdeg == 1, 1, ifelse(hsged == 1, 2, ifelse(somcol == 1, 3, 
+                               ifelse(aadeg == 1, 4, ifelse(bach == 1, 5, ifelse(ma == 1, 6, 
+                               ifelse(docprof == 1, 7, 99)))))))) %>% #creating ordinal educ variable from dummies
+        as_factor() %>% 
+        na.omit() %>% 
+        mutate(raceeth = fct_recode(raceeth,
+                                    "Asian" = "Asian",
+                                    "Black" = "Black",
+                                    "Hisp." = "Hispanic",
+                                    "White" = "White",
+                                    "Mult./Other" = ">1 race",
+                                    "Mult./Other" = "other"),
+                female = fct_recode(female, 
+                                   "Men" = "male", 
+                                   "Women" = "female"),
+                percclass = fct_recode(percclass, 
+                                      "Lower Class" = "lower class", 
+                                      "Working Class" = "working class", 
+                                      "Middle Class" = "middle class", 
+                                      "Upper Class" = "upper class"),
+                region = fct_recode(region,
+                                   "New England" = "New Enlgnad",
+                                   "South" = "East South",
+                                   "South" = "South Atlantic",
+                                   "Southwest" = "West South",
+                                   "Midwest" = "Eastern Midwest",
+                                   "Midwest" = "Western Midwest",
+                                   "Mountain" = "Mountain West",
+                                   "West Coast" = "Pacific West")
+                ) %>% 
+        rename(Age = age, Gender = female, Race = raceeth, Class_ID = percclass, 
+               Income = income, Region = region, Occupation = occ) %>% 
+        select(-c("nodipdeg", "hsged", "somcol", "aadeg", "bach", "ma", "docprof"))  
+        demog.dat$Degree <- factor(demog.dat$Degree, 
+                               labels = c("< High School", "High School/GED", "Some College", 
+                                          "Assoc. Deg.", "College", "M.A.", "PhD/Prof."))
+```
+
+```{r merging demographic and microgenre communities data}
+    taste.demog.dat <- bind_cols(id_char = paste("id", sapply(taste.dat[, 1], as.character), sep = "_"), taste.comms.dat)
+    taste.demog.dat$omnivore <- rowSums(taste.demog.dat[,c(2:ncol(taste.comms.dat) + 1)])
+    taste.demog.dat <- taste.demog.dat %>% 
+        left_join(demog.dat, by = "id_char") %>% 
+        na.omit() %>% 
+          mutate(omni_cat = case_when(
+            omnivore %in% 0:1 ~ 1,
+            omnivore %in% 2:3 ~ 2,
+            omnivore %in% 4:6 ~ 3,
+            omnivore %in% 7:9 ~ 4,
+            omnivore %in% 10:20 ~ 5)
+            )
+    taste.demog.dat$omni_cat <- factor(taste.demog.dat$omni_cat, 
+                                          labels = c("Zero-One", "Two-Three", "Four-Six", "Seven-Nine", "Ten+"))
+    save.image(file = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/taste.comm.demog.RData")
+```
+
+```{r functions to generate predicted prob. plot}
+    predProbs <- function(y, x, w, z = 1.96, p = 2, title = "", f = gaussian,  x.type = "") {
+      if (title == "") {
+        title <- deparse(substitute(y))
+        }
+      y <- eval(substitute(y), w)
+      x <- eval(substitute(x), w)
+      # regression
+      if (x.type == "") {
+        mymod <- glm(y ~ poly(as.numeric(x), p), data = w, family = deparse(substitute(f)))
+        }
+      if (x.type == "factor") {
+        mymod <- glm(y ~ x, data = w, family = deparse(substitute(f)))
+        }
+      mypred <- prediction(mymod)
+      mypred$lo <- mypred$fitted - (z*mypred$se.fitted)
+      mypred$hi <- mypred$fitted + (z*mypred$se.fitted)
+      m <- aggregate(mypred, by = list(x), "mean")
+    return(m[, c("Group.1", "fitted", "se.fitted", "lo", "hi")])
+    }
+  
+    plotPreds <- function(y, dat) {
+      title <- deparse(substitute(y))
+      y <- eval(substitute(y), dat)
+      pred.res1 <- predProbs(y, Degree, dat, f = binomial)
+      pred.res2 <- predProbs(y, Age, dat, f = binomial)
+      pred.res3 <- predProbs(y, Income, dat, f = binomial)
+      pred.res4 <- predProbs(y, Race, dat, f = binomial, x.type = "factor")
+      pred.res5 <- predProbs(y, Class_ID, dat, f = binomial, x.type = "factor")
+      pred.res6 <- predProbs(y, Gender, dat, f = binomial, x.type = "factor")
+      pred.res7 <- predProbs(y, Region, dat, f = binomial, x.type = "factor")
+      pred.res8 <- predProbs(y, omni_cat, dat, f = binomial, x.type = "factor")
+      pred.res <- data.frame(rbind(pred.res1, pred.res2, pred.res3, 
+                                   pred.res4, pred.res5, pred.res6,
+                                   pred.res7, pred.res8))
+      pred.res$var.type <- factor(c(rep(1, 7), rep(2, 14), rep(3, 23),
+                                    rep(4, 5), rep(5, 4), rep(6, 2),rep(7, 7), rep(8, 5))) 
+      return(pred.res)
+    }
+    
+    plotDat <- function(x, line.size = 0.75, prob.size = 14, lab.size = 14, point.size = 4, title = "") {
+      x1 <- x[c(which(x$var.type == 1), which(x$var.type == 2)), ]
+      x2 <- x[c(which(x$var.type == 4), which(x$var.type == 5), which(x$var.type == 7)), ]
+      x3 <- x[c(which(x$var.type == 6), which(x$var.type == 8)), ]
+      x <- rbind(x1, x2, x3)
+      p <- ggplot(mapping = aes(x = Group.1, group = var.type))
+      p <- p + geom_point(data = x, mapping = aes(y = fitted, color = var.type), size = point.size)
+      p <- p + geom_line(data = x1, mapping = aes(y = fitted, color = var.type), size = line.size)
+      p <- p + geom_ribbon(data = x1, mapping = aes(ymin = lo, ymax = hi, fill = var.type, color = var.type), alpha = 0.15, linetype = 0)
+      p <- p + geom_segment(data = x2, mapping = aes(y = lo, x = Group.1, yend = hi, xend = Group.1, color = var.type), alpha = 0.25, size = 1.25)
+      p <- p + geom_segment(data = x3, mapping = aes(y = 0, x = Group.1, yend = fitted, xend = Group.1, color = var.type), size = 0.9)
+      p <- p + geom_hline(yintercept = 0, color = "gray55")
+      p <- p + coord_flip()
+      p <- p + theme_minimal() + labs(x = "", y = "", title = "") + ggtitle(title)
+      p <- p + theme(legend.position = "none", axis.text.y = element_text(size = lab.size), 
+                     axis.text.x  = element_text(size = prob.size), 
+                     plot.title = element_text(size = 16)) 
+      p
+      }
+```
+
+```{r demographic predictors of microgenre community membership (by cluster)}
+      for (k in as.numeric(levels(mca.clust.dat$cluster))) {
+        dat <- mca.clust.dat %>% filter(cluster == k)
+        micro.g <- dat$id
+        dat <- micro.genre.dat %>% filter(genre %in% micro.g)
+        micro.g.sizes <- dat$size
+        if (length(micro.g) > 8) {
+            r <- 3 
+            lab.s <- 8
+            pt.s <- 2
+          }
+        if (length(micro.g) > 3 | length(micro.g) <= 8) {
+            r <- 2
+            lab.s <- 10
+            pt.s <- 3
+            }
+        if (length(micro.g) <= 3) {
+          r <- 1
+          lab.s <- 14
+          pt.s <- 4.5
+          }
+        g.plot.list <- list()
+        for (i in 1:length(micro.g)) {
+          p.title <- paste(micro.g[i], 
+                           paste("(N = ", paste(micro.g.sizes[i], ")", sep = ""), sep = ""), sep = " ")
+          g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g[i])), taste.demog.dat), 
+                                      title = p.title, lab.size = lab.s, point.size = pt.s)
+          }
+        p <- plot_grid(plotlist = g.plot.list, align = "hv", nrow = r)
+        g.save1 <- paste("cluster", k, sep = "_")
+        g.save2 <- paste(g.save1, ".png", sep = "")
+        ggsave(paste("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/cluster/", g.save2, sep = ""), scale = 0.85, height = 16, width = 22)
+        }
+```
+
+```{r demographic predictors of microgenre community membership (Focused Genres)}
+    macro.g <- names(taste.dat[, 2:length(taste.dat)])
+    macro.g <- macro.g[!macro.g %in% c("Country", "Classic_Rock", "Pop")] #removing vague genres from vector
+    for (k in 1:length(macro.g)) {
+      micro.g <- names(taste.demog.dat[,grepl(macro.g[k], names(taste.demog.dat))])
+      micro.g.sizes <- micro.genre.dat[grepl(macro.g[k], micro.genre.dat$genre), ]$size
+      if (length(micro.g) > 8) {
+          r <- 3 
+          lab.s <- 8
+          pt.s <- 2
+        }
+      if (length(micro.g) > 3 | length(micro.g) <= 8) {
+          r <- 2
+          lab.s <- 10
+          pt.s <- 3
+          }
+      if (length(micro.g) <= 3) {
+        r <- 1
+        lab.s <- 14
+        pt.s <- 4.5
+        }
+      g.plot.list <- list()
+      for (i in 1:length(micro.g)) {
+        p.title <- paste(micro.g[i], 
+                         paste("(N = ", paste(micro.g.sizes[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = lab.s, point.size = pt.s)
+      }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = r)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave(paste("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/", g.save, sep = ""), scale = 0.85, height = 17, width = 22)
+    }
+```
+
+```{r demographic predictors of microgenre community membership (Classic Rock)}
+      micro.g <- names(taste.demog.dat[,grepl("Classic_Rock", names(taste.demog.dat))])
+      micro.g.sizes <- micro.genre.dat[grepl("Classic_Rock", micro.genre.dat$genre), ]$size
+      micro.g1 <- micro.g[1:8]
+      micro.g2 <- micro.g[9:length(micro.g)]
+      micro.g.sizes1 <- micro.g.sizes[1:8]
+      micro.g.sizes2 <- micro.g.sizes[9:length(micro.g)]
+      #First set of Classic Rock Microgenres
+      g.plot.list <- list()
+      for (i in 1:length(micro.g1)) {
+        p.title <- paste(micro.g1[i], 
+                         paste("(N = ", paste(micro.g.sizes1[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g1[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = 10, point.size = 3)
+        }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = 2)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/Classic_Rock1.png", scale = 0.85, height = 17, width = 22)
+      #Second set of Classic Rock Microgenres
+      g.plot.list <- list()
+      for (i in 1:length(micro.g2)) {
+        p.title <- paste(micro.g2[i], 
+                         paste("(N = ", paste(micro.g.sizes2[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g2[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = 10, point.size = 3)
+          }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = 2)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/Classic_Rock2.png", scale = 0.85, height = 17, width = 22)
+```
+
+```{r demographic predictors of microgenre community membership (Country)}
+      micro.g <- names(taste.demog.dat[,grepl("Country", names(taste.demog.dat))])
+      micro.g.sizes <- micro.genre.dat[grepl("Country", micro.genre.dat$genre), ]$size
+      micro.g1 <- micro.g[1:5]
+      micro.g2 <- micro.g[6:length(micro.g)]
+      micro.g.sizes1 <- micro.g.sizes[1:5]
+      micro.g.sizes2 <- micro.g.sizes[6:length(micro.g)]
+      #First set of Country Microgenres
+      g.plot.list <- list()
+      for (i in 1:length(micro.g1)) {
+        p.title <- paste(micro.g1[i], 
+                         paste("(N = ", paste(micro.g.sizes1[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g1[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = 10, point.size = 3)
+        }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = 2)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/Country1.png", scale = 0.85, height = 17, width = 22)
+      #Second set of Country Microgenres
+      g.plot.list <- list()
+      for (i in 1:length(micro.g2)) {
+        p.title <- paste(micro.g2[i], 
+                         paste("(N = ", paste(micro.g.sizes2[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g2[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = 10, point.size = 3)
+          }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = 2)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/Country2.png", scale = 0.85, height = 17, width = 22)
+```
+
+```{r demographic predictors of microgenre community membership (Pop)}
+      micro.g <- names(taste.demog.dat[,grepl("Pop", names(taste.demog.dat))])
+      micro.g.sizes <- micro.genre.dat[grepl("Pop", micro.genre.dat$genre), ]$size
+      micro.g1 <- micro.g[1:5]
+      micro.g2 <- micro.g[6:length(micro.g)]
+      micro.g.sizes1 <- micro.g.sizes[1:5]
+      micro.g.sizes2 <- micro.g.sizes[6:length(micro.g)]
+      #First set of Country Microgenres
+      g.plot.list <- list()
+      for (i in 1:length(micro.g1)) {
+        p.title <- paste(micro.g1[i], 
+                         paste("(N = ", paste(micro.g.sizes1[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g1[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = 10, point.size = 3)
+        }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = 2)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/Pop1.png", scale = 0.85, height = 17, width = 22)
+      #Second set of Country Microgenres
+      g.plot.list <- list()
+      for (i in 1:length(micro.g2)) {
+        p.title <- paste(micro.g2[i], 
+                         paste("(N = ", paste(micro.g.sizes2[i], ")", sep = ""), sep = ""), sep = " ")
+        g.plot.list[[i]] <- plotDat(plotPreds(y = eval(as.name(micro.g2[i])), taste.demog.dat), 
+                                    title = p.title, lab.size = 10, point.size = 3)
+          }
+      plot_grid(plotlist = g.plot.list, align = "hv", nrow = 2)
+      g.save <- paste(macro.g[k], ".png", sep = "")
+      ggsave("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/demog-plots/Pop2.png", scale = 0.85, height = 17, width = 22)
+```
+

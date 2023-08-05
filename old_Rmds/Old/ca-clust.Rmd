@@ -1,0 +1,95 @@
+---
+title: "Correspondence Analysis Clustering"
+author: "Omar Lizardo"
+date: "`r Sys.Date()`"
+output:
+html_document: default
+---
+
+# Setup
+```{r setup}
+    knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
+    require("ggraph")
+    require("ggplot2")
+    require("tidyverse")
+```
+
+# Data Wrangling
+```{r Importing and creating two mode data frame of people by genres}
+    taste.dat <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta")
+    taste.dat <- taste.dat %>% 
+      dplyr::select("id", ends_with(c("lis", "like")), -starts_with("none")) %>% 
+      dplyr::select(c(1:41)) %>% 
+      na.omit() %>% 
+      mutate(Classical = classicallike * classicallis,
+             Opera = operalike * operalis,
+             Jazz = jazzlike * jazzlis,
+             Broadway = bwaystlike * bwaystlis,
+             Easy = moodezlike * moodezlis, 
+             Bigband = bbandlike * bbandlis,
+             Classic_Rock = croldlike * croldlis,
+             Country = countrylike * countrylis,
+             Bluegrass = blueglike * blueglis,
+             Folk = folklike * folklis,
+             Gospel = hymgoslike * hymgoslis,
+             Latin = latlpsallike * latspsallis,
+             Rap_Hip_Hop = raphiphoplike * raphiphoplis,
+             Blues_RandB = blurblike * blurblis,
+             Reggae = reggaelike * reggaelis,
+             Pop = toppoplike * toppoplis,
+             Contemp_Rock = controcklike * controcklis,
+             Indie_Alt = indaltlike * indaltlis,
+             Dance_Club = danclublike * danclublis,
+             Heavy_Metal = hvymtllike * hvymtllis
+             ) %>%  #people are linked to genres that the both like and listen to
+    dplyr::select(id, Classical:Heavy_Metal)
+    g.names <- names(taste.dat[, 2:ncol(taste.dat)])
+
+```
+
+```{r}
+    source(here("R", "Functions", "ca.clust.R"))
+    taste.mat <- as.matrix(taste.dat[, g.names])
+    rownames(taste.mat) <- taste.dat$id
+    taste.mat <- taste.mat[rowSums(taste.mat) != 0, ]
+    clust.res <- ca.clust(taste.mat)
+```
+
+```{r}
+    clust.res$e.Cc
+    eig.dat.e.Cc <- data.frame(Pos = 1:length(clust.res$e.Cc),
+                             Eig = clust.res$e.Cc)
+    p <- ggplot(data = eig.dat.e.Cc, 
+                mapping = aes(x = Pos, y = Eig))
+    p <- p + geom_point(size = 3, color = "blue")
+    p <- p + geom_hline(yintercept = 1, color = "red")
+    p <- p + theme_minimal()
+
+    dat.c <- clust.res$ev.Cc[, 2:7]
+    rownames(dat.c) <- colnames(taste.mat)
+    km.c <- kmeans(dat.c, 6, nstart = 25)
+    fviz_cluster(km.c, dat.c, 
+                 palette = "Set2", 
+                 ggtheme = theme_minimal())
+
+```
+
+```{r}
+    dat.r <- data.frame(Pos = 1:sum(clust.res$e.Cr!=0),
+                        Eig = clust.res$e.Cr[1:sum(clust.res$e.Cr!=0)])
+    dat.r
+    p <- ggplot(data = eig.dat.e.Cc, 
+                mapping = aes(x = Pos, y = Eig))
+    p <- p + geom_point(size = 3, color = "blue")
+    p <- p + geom_hline(yintercept = 1, color = "red")
+    p <- p + theme_minimal()
+    p
+
+    dat.r <- clust.res$ev.Cr[, 2:7]
+    km.r <- kmeans(dat.r, 6, nstart = 25)
+    fviz_cluster(km.r, dat.r, 
+                 palette = "Set2", 
+                 ellipse = TRUE,
+                 labelsize = 1,
+                 ggtheme = theme_minimal())
+```

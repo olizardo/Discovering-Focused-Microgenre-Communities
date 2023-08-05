@@ -1,0 +1,136 @@
+```{r calculating micro-genre distance matrix from micro-genre overlap matrix}
+    micro.overlaps <- t(as.matrix(lclust.dat[, 2:ncol(lclust.dat)])) %*% as.matrix(lclust.dat[, 2:ncol(lclust.dat)])
+    micro.dist <- micro.overlaps 
+    diag(micro.dist) <- 0
+    micro.dist <- as.dist(1 - micro.dist/max(micro.dist))
+    micro.clust.res <- hclust(micro.dist, method = "ward.D2") #link clustering of link by link distance matrix
+    nc <- NbClust(diss = micro.dist, method = "ward.D2", 
+                      index = "silhouette", distance = NULL)
+```
+
+```{r prepping data for mca plot of micro-genre communities}
+    mca.dat <- lclust.dat[, 2:ncol(lclust.dat)]
+    factor_commvars <- function(x) {
+        factor(x, labels = c("No", "Yes"))
+      }
+    mca.dat <- mca.dat %>% 
+        mutate(across(1:ncol(mca.dat), factor_commvars))
+    mca.res <- MCA(mca.dat, ncp = 10, graph = FALSE,  method = "indicator") #peforming MCA of micro-genre communities
+    mca.yes.mods <- mca.res$var$coord[seq(2, nrow(mca.res$var$coord), by = 2), ]
+    mca.clust.dat <- as_tibble(mca.yes.mods)
+    mca.hk.res <-hkmeans(mca.clust.dat[,1:4], k = 17, hc.method = "ward.D2") #clustering yes modalities on principal components
+    mca.clust.dat <- bind_cols(
+      tibble(id = gsub("_Yes", "", rownames(mca.yes.mods))),
+      mca.clust.dat, 
+      tibble(cluster = factor(mca.hk.res$cluster))
+      )
+```
+
+```{r MCA biplot of micro-genre communities}
+    p <- ggplot(data = mca.clust.dat, 
+                mapping = aes(x = `Dim 1`, y = `Dim 2`, color = cluster))
+    p <- p + theme_minimal()
+    p <- p + geom_hline(yintercept = 0, colour = "gray75") 
+    p <- p + geom_vline(xintercept = 0, colour = "gray75")
+    p <- p + geom_text(aes(label = id), check_overlap = TRUE, size = 4)
+    p <- p + stat_ellipse(linetype = 0, geom = "polygon", aes(fill = cluster), alpha = 0.02)
+    p <- p + labs(x = "Dimension 1", y = "Dimension 2")
+    p <- p + theme_sjplot()
+    p.12 <- p + theme(
+                    panel.grid.major.y = element_line(color = "grey90"),
+                    panel.grid.major.x = element_line(color = "grey90"),
+                    axis.title = element_text(size = 18), 
+                    axis.text = element_text(size = 18),
+                    axis.line.x = element_blank(),
+                    axis.line.y = element_blank(),
+                    legend.position = "none"
+                    )
+    p <- ggplot(data = mca.clust.dat, 
+                mapping = aes(x = `Dim 3`, y = `Dim 4`, color = cluster))
+    p <- p + theme_minimal()
+    p <- p + geom_hline(yintercept = 0, colour = "gray75") 
+    p <- p + geom_vline(xintercept = 0, colour = "gray75")
+    p <- p + geom_text(aes(label = id), check_overlap = TRUE, size = 4)
+    p <- p + stat_ellipse(linetype = 0, geom = "polygon", aes(fill = cluster), alpha = 0.02)
+    p <- p + labs(x = "Dimension 3", y = "Dimension 4")
+    p <- p + theme_sjplot()
+    p.34 <- p + theme(
+                    panel.grid.major.y = element_line(color = "grey90"),
+                    panel.grid.major.x = element_line(color = "grey90"),
+                    axis.title = element_text(size = 18), 
+                    axis.text = element_text(size = 18),
+                    axis.line.x = element_blank(),
+                    axis.line.y = element_blank(),
+                    legend.position = "none"
+                    )
+    p <- fviz_nbclust(mca.yes.mods, 
+                      kmeans, method = "silhouette", 
+                      k.max = 20, linecolor = "red")     
+    p <- p + labs(y = "", x = "") 
+    p.in <- p + theme(plot.background = 
+                       element_rect(colour = "white", size = 0.25),
+                   axis.text.x = element_text(size = 10))
+    p <-  p.12 / p.34 #combining plots using patchwork
+    p <- p + inset_element(p.in, 0.01, 0, 0.35, 0.35) #inset plot using patchwork
+    save_plot(here("Plots", "Link Clust", "micro-genre-mca.png"), 
+              width = 35, height = 45)
+    
+```
+        
+```{r Network plot of two mode micro-genre overlaps}
+    linkcomm.net <- graph_from_adjacency_matrix(micro.overlaps, 
+                                            mode = "undirected",
+                                            diag = FALSE, weighted = TRUE)
+    linkcomm.bb <- disparity(linkcomm.net, alpha = 0.05, narrative = TRUE)
+    iso <- which(degree(linkcomm.bb)== 0)
+    linkcomm.bb <- delete.vertices(linkcomm.bb, iso) 
+    c <- cluster_louvain(linkcomm.bb)
+    V(linkcomm.bb)$c <- c$membership   
+    p <- ggraph(linkcomm.bb, layout = 'auto')
+    p <- p + geom_node_text(aes(label = name, 
+                                color = as.factor(c)), size = 6, check_overlap = TRUE)
+    p <- p + geom_edge_link(color = "grey70", width = 0.5) 
+    p <- p + theme_graph() + theme(legend.position = "none")
+    p
+    save_plot(here("Plots", "Link Clust", "micro-genre-net.png"), 
+              width = 55, height = 45)
+```
+
+```{r Dendrogram representation of nested micro-genre communities}
+    p <- fviz_dend(micro.clust.res, cex = 1.05, k = nc$Best.nc[1], 
+                       type = "rectangle", repel = TRUE, k_colors = "uchicago",
+                       color_labels_by_k = TRUE, rect = FALSE, lwd = 1.2) 
+    p <- p + theme_minimal() 
+    p <- p + labs(x = "", y = "")
+    p.rect <- p + theme(
+                axis.line=element_blank(),
+                axis.text.x=element_blank(),
+                axis.text.y=element_blank(),
+                axis.ticks=element_blank(),
+                axis.title.x=element_blank(),
+                axis.title.y=element_blank()
+                )
+    p.rect
+    save_plot(here("Plots", "Link Clust", "micro-genre-dend.png"), 
+              width = 65, height = 45)
+```
+
+```{r Phylogenic representation of nested micro-genre communities}
+    p <- fviz_dend(micro.clust.res, cex = 1.5, k = nc$Best.nc[1], 
+                       type = "phylogenic", repel = TRUE, k_colors = "uchicago",
+                       color_labels_by_k = TRUE) 
+    p <- p + theme_minimal() 
+    p <- p + labs(x = "", y = "")
+    p.phylo <- p + theme(
+                axis.line=element_blank(),
+                axis.text.x=element_blank(),
+                axis.text.y=element_blank(),
+                axis.ticks=element_blank(),
+                axis.title.x=element_blank(),
+                axis.title.y=element_blank()
+                )
+    p.phylo
+    save_plot(here("Plots", "Link Clust", "micro-genre-phylo.png"), 
+              width = 55, height = 45)
+```
+

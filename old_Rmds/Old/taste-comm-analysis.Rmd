@@ -1,0 +1,382 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r packages and loading user created functions, message=FALSE, warning=FALSE, paged.print=FALSE}
+  library(ggrepel)
+  library(ggplot2)
+  library(ggpubr)
+  library(FactoMineR)
+  library(factoextra)
+  library(qgraph)
+  library(tidyverse)
+  library(linkcomm)
+```
+
+
+```{r fancy dendrogram plot for all edges}
+    windows(height = 15, width = 24)
+    dend <- plot(taste.comm2, type = "dend")
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/edge-cluster-dendro.png", type = "png")
+```
+
+```{r regular dendrogram for genre communities}
+    windows(height = 15, width = 24)
+    fviz_dend(taste.hc, cex = 0.35, k = 12,  k_colors = "uchicago") +
+    theme_minimal() + ylab("") + xlab("") +
+    theme(axis.line=element_blank(),
+          axis.text.x=element_blank(),
+          axis.text.y=element_blank(),
+          axis.ticks=element_blank(),
+          axis.title.x=element_blank(),
+          axis.title.y=element_blank())
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-dendro.png", type = "png")
+    windows(height = 18, width = 10)
+    fviz_dend(taste.hc, cex = .85, k = 12, ylim = c(-1,4), xlim = c(1, 24))
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-dendro-zoom.png", type = "png")
+```
+
+
+
+``
+
+```{r mca biplot of micro-genre communities}
+g <- c("Classical", "Opera", "Jazz", "Broadway", "Easy", "BigBand", "ClassicRock", "Country",
+                 "Bluegrass", "Folk", "Gospel", "Latin", "Rap", "Blues", "Reggae", 
+                 "Pop", "ContRock", "Alt", "Dance", "Metal")
+     g <- c("Classical")
+    i <- 1
+    while(i <= length(g)) {
+      p <- NiceInsetPlot(mca.res, sil = FALSE, yes.only = TRUE, cos.size = FALSE, 
+                         v.size = log(comm.sizes[rownames(get.Yes.mca(mca.res$var$coord))])*.8, 
+                         k = 16, xlims = c(-3,4), i.mag = 3, v.alpha = 0, e.alpha = 0.03)
+      x <- get.Yes.mca(mca.res$var$coord)
+      x <- x[grep(paste0("^", g[i]), rownames(x)), ]
+      p <- p + geom_text_repel(data = x, 
+                           mapping = aes(x = x[, 1], y = x[, 2], label = rownames(x), color = x$cluster), 
+                           size = log(comm.sizes[rownames(x)])*.8, 
+                           segment.alpha = 0) 
+      windows(height = 18, width = 32)
+      file <- paste0("genre-comm-hihglight-", g[i])
+      file <- paste0(file, ".png")
+      file <- paste0("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/", file)
+      plot(p)
+      savePlot(filename = file, type = "png")
+      dev.off()
+      i <- i + 1
+    }
+
+
+```
+
+```{r mca plot genre communities cloud of individuals}
+    i.dat <- mca.res$ind$coord[, 1:2]
+    res.hclust <- eclust(i.dat, "hclust", k = 16, method = "ward.D", graph = FALSE) 
+    clus <- res.hclust$cluster
+    clus.centers <- aggregate(i.dat, list(clus), mean)
+    clus.centers <- clus.centers[, -1]
+    res.km <- eclust(i.dat, "kmeans", k = clus.centers, graph = FALSE)
+    i.dat <- cbind(i.dat, as.data.frame(factor(res.km$cluster)))
+    names(i.dat)[length(i.dat)] <- "cluster"
+
+    windows(height = 18, width = 32)
+    p <- ggplot(data = i.dat, mapping = aes(x = i.dat[, 1], y = i.dat[, 2], colour = cluster))
+    p <- p + theme_classic() + guides(colour = FALSE, size = FALSE, alpha = FALSE)
+    p <- p + geom_text(aes(label = comm.num$omni, size = comm.num$omni), position=position_jitter(width = 0.07,height = 0.07))
+    p <- p + labs(x = "Dimension 1", y = "Dimension 2")
+    p <- p + theme(axis.title = element_text(size = 18))
+    p <- p + geom_hline(yintercept = 0, colour = "gray55") 
+    p <- p + geom_vline(xintercept = 0, colour = "gray55") 
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-mca-cloud.png",
+             type = "png")
+
+
+
+
+```
+
+# Genre Demographic Profiles ##
+
+
+```{r genre community demographic profiles (classical all), warning=FALSE}
+    r1 <- plotPreds(y = Classical_134, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Classical_170, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Classical_184, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Classical_173, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Classical_153, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Classical_61, data = comm.demog.num, plot.num = 6)
+    r7 <- plotPreds(y = Classical_144, data = comm.demog.num, plot.num = 7)
+    r8 <- plotPreds(y = Classical_189, data = comm.demog.num, plot.num = 8)
+    r9 <- plotPreds(y = Classical_240, data = comm.demog.num, plot.num = 9)
+    r10 <- plotPreds(y = Classical_216, data = comm.demog.num, plot.num = 10)
+    r11 <- plotPreds(y = Classical_171, data = comm.demog.num, plot.num = 11)
+    r12 <- plotPreds(y = Classical_225, data = comm.demog.num, plot.num = 12)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12)
+    p <- plotDat(plot.dat, n.row = 2)
+    windows(height = 14, width = 24)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-classical-demog.png",
+             type = "png")
+
+
+```
+    
+
+
+```{r genre community demographic profiles (classical selected), warning=FALSE}
+    r1 <- plotPreds(y = Classical_134, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Classical_170, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Classical_173, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Classical_61, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Classical_240, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Classical_216, data = comm.demog.num, plot.num = 6)
+    r7 <- plotPreds(y = Classical_171, data = comm.demog.num, plot.num = 7)
+    r8 <- plotPreds(y = Classical_144, data = comm.demog.num, plot.num = 8)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6, r7, r8)
+    source("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/R/plotDat.R")
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 10)
+    windows(height = 18, width = 20)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-classical.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (Jazz selected), warning=FALSE}
+    r1 <- plotPreds(y = Jazz_245, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Jazz_157, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Jazz_90, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Jazz_222, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Jazz_183, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Jazz_88, data = comm.demog.num, plot.num = 6)
+    r7 <- plotPreds(y = Jazz_87, data = comm.demog.num, plot.num = 7)
+    r8 <- plotPreds(y = Jazz_215, data = comm.demog.num, plot.num = 8)
+    r9 <- plotPreds(y = Jazz_273, data = comm.demog.num, plot.num = 9)
+    r10 <- plotPreds(y = Jazz_253, data = comm.demog.num, plot.num = 10)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6, r7, r8, r9, r10)
+    source("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/R/plotDat.R")
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 10)
+    windows(height = 18, width = 20)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-Jazz.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (Blues selected), warning=FALSE}
+    r1 <- plotPreds(y = Blues_179, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Blues_137, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Blues_55, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Blues_265, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Blues_234, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Blues_190, data = comm.demog.num, plot.num = 6)
+    r7 <- plotPreds(y = Blues_152, data = comm.demog.num, plot.num = 7)
+    r8 <- plotPreds(y = Blues_237, data = comm.demog.num, plot.num = 8)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6, r7, r8)
+    source("C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/R/plotDat.R")
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 10)
+    windows(height = 18, width = 20)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-Blues.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (ClassicRock), warning=FALSE}
+    r1 <- plotPreds(y = ClassicRock_272, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = ClassicRock_227, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = ClassicRock_151, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = ClassicRock_133, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = ClassicRock_287, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = ClassicRock_187, data = comm.demog.num, plot.num = 6)
+    r5 <- plotPreds(y = ClassicRock_250, data = comm.demog.num, plot.num = 7)
+    r6 <- plotPreds(y = ClassicRock_211, data = comm.demog.num, plot.num = 8)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6, r7, r8)
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 8)
+    windows(height = 18, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-ClassicRock.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (country), warning=FALSE}
+    r1 <- plotPreds(y = Country_200, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Country_231, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Country_204, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Country_69, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Country_168, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Country_128, data = comm.demog.num, plot.num = 6)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6)
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 8)
+    windows(height = 18, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-country.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (broadway), warning=FALSE}
+    r1 <- plotPreds(y = Broadway_114, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Broadway_214, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Broadway_244, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Broadway_122, data = comm.demog.num, plot.num = 4)
+    plot.dat <- rbind(r1, r2, r3, r4)
+    p <- plotDat(plot.dat, n.row = 1, ts = 18, ls = 16)
+    windows(height = 12, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-broadway.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (reggae), warning=FALSE}
+    r1 <- plotPreds(y = Reggae_232, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Reggae_143, data = comm.demog.num, plot.num = 2)
+    plot.dat <- rbind(r1, r2)
+    p <- plotDat(plot.dat, n.row = 1, ts = 18)
+    windows(height = 12, width = 14)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-reggae.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (alt), warning=FALSE}
+    r1 <- plotPreds(y = Alt_160, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Alt_74, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Alt_223, data = comm.demog.num, plot.num = 3)
+    plot.dat <- rbind(r1, r2, r3)
+    p <- plotDat(plot.dat, n.row = 1, ts = 18)
+    windows(height = 12, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-alt.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (dance), warning=FALSE}
+    r1 <- plotPreds(y = Dance_111, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Dance_154, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Dance_166, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Dance_124, data = comm.demog.num, plot.num = 4)
+    plot.dat <- rbind(r1, r2, r3, r4)
+    p <- plotDat(plot.dat, n.row = 1, ts = 20, ls = 16)
+    windows(height = 10, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-dance.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (metal), warning=FALSE}
+    r1 <- plotPreds(y = Metal_242, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Metal_140, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Metal_257, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Metal_115, data = comm.demog.num, plot.num = 4)
+    plot.dat <- rbind(r1, r2, r3, r4)
+    p <- plotDat(plot.dat, n.row = 1, ts = 16, ls = 14)
+    windows(height = 12, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-metal.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (folk), warning=FALSE}
+    r1 <- plotPreds(y = Folk_207, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Folk_283, data = comm.demog.num, plot.num = 2)
+    plot.dat <- rbind(r1, r2)
+    p <- plotDat(plot.dat, n.row = 1, ts = 18)
+    windows(height = 12, width = 12)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-folk.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (opera), warning=FALSE}
+    r1 <- plotPreds(y = Opera_282, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Opera_226, data = comm.demog.num, plot.num = 2)
+    p <- plotDat(rbind(r1, r2), n.row = 1, ts = 18, ls = 16)
+    windows(height = 12, width = 10)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-opera.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (gospel), warning=FALSE}
+    r1 <- plotPreds(y = Gospel_264, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Gospel_284, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Gospel_220, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Gospel_270, data = comm.demog.num, plot.num = 4)
+    plot.dat <- rbind(r1, r2, r3, r4)
+    p <- plotDat(plot.dat, n.row = 1, ts = 20, ls = 16)
+    windows(height = 10, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-gospel.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (bluegrass), warning=FALSE}
+    r1 <- plotPreds(y = Bluegrass_260, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Bluegrass_243, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Bluegrass_274, data = comm.demog.num, plot.num = 3)
+    plot.dat <- rbind(r1, r2, r3)
+    p <- plotDat(plot.dat, n.row = 1, ts = 18, ls = 18)
+    windows(height = 14, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-bluegrass.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (latin), warning=FALSE}
+    r1 <- plotPreds(y = Latin_176, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Latin_89, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Latin_56, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Latin_178, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Latin_239, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Latin_86, data = comm.demog.num, plot.num = 6)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6)
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 9)
+    windows(height = 18, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-latin.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (rap), warning=FALSE}
+    r1 <- plotPreds(y = Rap_191, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Rap_73, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Rap_218, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Rap_289, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Rap_156, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Rap_255, data = comm.demog.num, plot.num = 6)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6)
+    p <- plotDat(plot.dat, n.row = 2, ts = 14, ls = 8)
+    windows(height = 18, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-rap.png",
+             type = "png")
+```
+
+```{r genre community demographic profiles (controck), warning=FALSE}
+    r1 <- plotPreds(y = ContRock_278, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = ContRock_177, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = ContRock_149, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = ContRock_288, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = ContRock_161, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = ContRock_254, data = comm.demog.num, plot.num = 6)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6)
+    p <- plotDat(plot.dat, n.row = 2, ts = 12, ls = 8)
+    windows(height = 18, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-controck.png",
+             type = "png")
+```
+
+```{r genre community demogPophic profiles (pop), warning=FALSE}
+    r1 <- plotPreds(y = Pop_228, data = comm.demog.num, plot.num = 1)
+    r2 <- plotPreds(y = Pop_251, data = comm.demog.num, plot.num = 2)
+    r3 <- plotPreds(y = Pop_249, data = comm.demog.num, plot.num = 3)
+    r4 <- plotPreds(y = Pop_263, data = comm.demog.num, plot.num = 4)
+    r5 <- plotPreds(y = Pop_181, data = comm.demog.num, plot.num = 5)
+    r6 <- plotPreds(y = Pop_99, data = comm.demog.num, plot.num = 6)
+    plot.dat <- rbind(r1, r2, r3, r4, r5, r6)
+    p <- plotDat(plot.dat, n.row = 2, ts = 16, ls = 10)
+    windows(height = 18, width = 18)
+    p
+    savePlot(filename = "C:/Users/Omar Lizardo/Google Drive/WORK/EARLY/CULTURE/lizardo-genre-communities/plots/genre-comm-demog-pop.png",
+             type = "png")
+```

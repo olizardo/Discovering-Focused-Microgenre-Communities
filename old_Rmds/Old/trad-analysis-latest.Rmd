@@ -1,0 +1,185 @@
+---
+title: "Discovering Focused Microgenre Communities"
+author: "Omar Lizardo"
+date: "`r Sys.Date()`"
+output:
+html_document: default
+---
+
+# Setup
+```{r setup}
+    knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
+    require("depmixS4")
+    require("FactoMineR")
+    require("factoextra")
+    require("ggraph")
+    require("ggplot2")
+    require("haven")
+    require("here")   
+    require("patchwork")
+    require("qgraph")
+    require("sjPlot")
+    require("tidyverse")
+```
+
+# Data Wrangling
+```{r Importing and creating two mode data frame of people by genres}
+    taste.dat <- read_dta("C:/Users/Omar Lizardo/Google Drive/MISC DATA SOURCES/SSI-2012/SSI2012.dta")
+    taste.dat <- taste.dat %>% 
+      dplyr::select("id", ends_with(c("lis", "like")), -starts_with("none")) %>% 
+      dplyr::select(c(1:41)) %>% 
+      na.omit() %>% 
+      mutate(Classical = classicallike * classicallis,
+             Opera = operalike * operalis,
+             Jazz = jazzlike * jazzlis,
+             Broadway = bwaystlike * bwaystlis,
+             Easy = moodezlike * moodezlis, 
+             Bigband = bbandlike * bbandlis,
+             Classic_Rock = croldlike * croldlis,
+             Country = countrylike * countrylis,
+             Bluegrass = blueglike * blueglis,
+             Folk = folklike * folklis,
+             Gospel = hymgoslike * hymgoslis,
+             Latin = latlpsallike * latspsallis,
+             Rap_Hip_Hop = raphiphoplike * raphiphoplis,
+             Blues_RandB = blurblike * blurblis,
+             Reggae = reggaelike * reggaelis,
+             Pop = toppoplike * toppoplis,
+             Contemp_Rock = controcklike * controcklis,
+             Indie_Alt = indaltlike * indaltlis,
+             Dance_Club = danclublike * danclublis,
+             Heavy_Metal = hvymtllike * hvymtllis
+             ) %>%  #people are linked to genres that the both like and listen to
+    dplyr::select(id, Classical:Heavy_Metal)
+    g.names <- names(taste.dat[, 2:ncol(taste.dat)])
+
+```
+
+# Traditional Analytic Techniques
+```{r Factor Analysis}
+    f1 <- c(12, 13, 14, 15, 19)
+    f2 <- c(1, 2, 3, 4, 5, 6)
+    f3 <- c(7, 16, 17, 18, 20)
+    f4 <- c(8, 9, 10, 11)
+    gen.groups <- list(f1, f2, f3, f4)
+    efa.res <- factanal(taste.dat[, g.names], 
+                        factors = 4, rotation = "promax",
+                        scores = "regression")
+    png(here("Plots", "Regular", "genre-efa-regular.png"), 
+        height = 3900, width = 6500)
+    qgraph(efa.res$loadings, groups = gen.groups, borders = FALSE, 
+          edge.labels = TRUE, minimum = 0.05, 
+          edge.label.cex = 0.8, edge.width = 0.8)
+```
+
+```{r Latent Class Analysis}
+    lca.dat <- taste.dat[, g.names]
+    set.seed(25)
+    mod1 <- mix(list(Classical~1, Opera~1, Jazz~1, Broadway~1, Easy~1, Bigband~1, Classic_Rock~1, Country~1, Bluegrass~1, Folk~1, Gospel~1, Latin~1, Rap_Hip_Hop~1, Blues_RandB~1, Reggae~1, Pop~1, Contemp_Rock~1, Indie_Alt~1, Dance_Club~1, Heavy_Metal~1), 
+                data=lca.dat, # the dataset to use
+                nstates = 6, # the number of latent classes
+                family=list(multinomial("identity"), multinomial("identity"), 
+                             multinomial("identity"), multinomial("identity"),
+                             multinomial("identity"), multinomial("identity"), 
+                             multinomial("identity"), multinomial("identity"),
+                             multinomial("identity"), multinomial("identity"), 
+                             multinomial("identity"), multinomial("identity"),
+                             multinomial("identity"), multinomial("identity"), 
+                             multinomial("identity"), multinomial("identity"),
+                             multinomial("identity"), multinomial("identity"), 
+                             multinomial("identity"), multinomial("identity")),
+               respstart=runif(240))
+    fmod1 <- fit(mod1, verbose=FALSE)
+    lca.res <- as_tibble(posterior(fmod1)) #collecting latent class probabilities
+```
+
+```{r Data table for plotting latent classes}
+    lc.plot.data <- bind_cols(lca.dat, lca.res) %>% 
+        gather(key="measure", value="value", Classical:Heavy_Metal) %>% 
+        mutate(state = factor(state, labels = c("Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6"))) %>% 
+        mutate(value = factor(value, labels = c("no", "yes")))
+```
+
+```{r Plotting latent classes}
+    p <- ggplot(data = lc.plot.data, mapping = aes(x = measure, fill = value)) 
+    p <- p + theme_sjplot()
+    p <- p + geom_bar(position="fill")  
+    p <- p + scale_fill_brewer(palette = "Paired")
+    p <- p + facet_wrap(~ state, nrow = 2) + coord_flip() 
+    p <- p + theme(
+                axis.text = element_text(size = 12),
+                legend.position = "bottom",
+                strip.text = element_text(size = 18)
+                )
+    
+    
+    p.lca <- p + labs(x = "", y = "") + labs(fill="")
+    p.lca
+    save_plot(here("Plots", "Regular", "genre-lca-regular.png"), 
+              width = 40, height = 25)
+```
+
+```{r Prepping data for MCA, performing MCA, and generating label size and individual alpha vectors}
+    yesno.labs <- function(x) {
+        factor(x, labels = c("No", "Yes"))
+        }
+    mca.dat <- taste.dat[, g.names] %>% 
+        mutate(across(1:ncol(taste.dat)-1, yesno.labs))
+    mca.res <- MCA(mca.dat, ncp = 10, graph = FALSE,  method = "indicator") #performing MCA
+    mca.dim.vars <- as_tibble(mca.res$var$coord) #modality coordinates
+    mca.dim.ind <- as_tibble(mca.res$ind$coord) #individual coordinates
+    var.names <- rownames(mca.res$var$coord) #vector of label names
+    text.size1 <- log(apply(mca.res$var$contrib[,c(1:2)], 1, sum))*3 #vector of sizes based on contributions
+    text.size2 <- log(apply(mca.res$var$contrib[,c(3:4)], 1, sum))*3  #vector of sizes based on contributions
+    ind.alpha1 <- apply(mca.res$ind$contrib[,c(1:2)], 1, mean)/ max(apply(mca.res$ind$contrib[,c(1:2)], 1, mean))  #vector of alphas based on contributions
+    ind.alpha2<- apply(mca.res$ind$contrib[,c(3:4)], 1, mean)/ max(apply(mca.res$ind$contrib[,c(3:4)], 1, mean)) #vector of alphas based on contributions
+```
+
+```{r MCA biplots}
+    p <- ggplot(data = mca.dim.vars, mapping = aes(x = `Dim 1`, y = `Dim 2`))
+    p <- p + geom_text(aes(label = var.names), size = text.size1, color = "blue", check_overlap = TRUE) #cloud of modalities
+    p <- p + geom_hline(yintercept = 0, colour = "gray45") 
+    p <- p + geom_vline(xintercept = 0, colour = "gray45") 
+    p <- p + labs(x = "Dimension 1", y = "Dimension 2") 
+    p <- p + geom_point(data = mca.dim.ind, aes(x = `Dim 1`, y = `Dim 2`), color = "red", alpha = ind.alpha1) #cloud of individuals
+    p <- p + theme_sjplot()
+    p1 <- p + theme(
+                    panel.grid.major.y = element_line(color = "grey90"),
+                    panel.grid.major.x = element_line(color = "grey90"),
+                    axis.title = element_text(size = 18), 
+                    axis.text = element_text(size = 18),
+                    axis.line.x = element_blank(),
+                    axis.line.y = element_blank(),
+                    legend.position = "none"
+                    )
+    p <- ggplot(data = mca.dim.vars, mapping = aes(x = `Dim 3`, y = `Dim 4`))
+    p <- p + geom_text(aes(label = var.names), size = text.size1, color = "blue", check_overlap = TRUE) #cloud of modalities
+    p <- p + geom_hline(yintercept = 0, colour = "gray45") 
+    p <- p + geom_vline(xintercept = 0, colour = "gray45") 
+    p <- p + labs(x = "Dimension 3", y = "Dimension 4") 
+    p <- p + geom_point(data = mca.dim.ind, aes(x = `Dim 1`, y = `Dim 2`), color = "red", alpha = ind.alpha1) #cloud of individuals
+    p <- p + xlim(-1.5, 2)
+    p <- p + theme_sjplot()
+    p2 <- p + theme(
+                    panel.grid.major.y = element_line(color = "grey90"),
+                    panel.grid.major.x = element_line(color = "grey90"),
+                    axis.title = element_text(size = 18), 
+                    axis.text = element_text(size = 18),
+                    axis.line.x = element_blank(),
+                    axis.line.y = element_blank(),
+                    legend.position = "none"
+                    )
+    p.in <- fviz_eig(mca.res, ncp = 8, linecolor = "red")  #inset bar plot showing eigenvalue distribution
+    p.in <- p.in + labs(y = "", x = "", title = "") 
+    p.in <- p.in + theme_sjplot2()
+    p.in <- p.in + theme(
+                    plot.background = element_rect(colour = "grey60", size = 0.25),
+                    panel.grid.major.y = element_blank(),
+                    panel.grid.major.x = element_blank(),
+                    )
+    p3 <-  p1 / p2 #combining plots using patchwork
+    p4 <- p3 + inset_element(p.in, 0.8, 0, 1, 0.5) #inset plot using patchwork
+    p4
+    save_plot(here("Plots", "Regular", "genre-mca-regular.png"), 
+              width = 35, height = 40)
+```
