@@ -7,9 +7,10 @@
 # Setup
 ```{r setup}
     knitr::opts_chunk$set(include=FALSE, echo = TRUE, warning = FALSE, message = FALSE)
-    require("dendextend")
-    require("here")
-    require("RColorBrewer")
+    library(dendextend)
+    library(here)
+    library(RColorBrewer)
+    library(tidyverse)
 ```
 
 ```{r Loading link distance matrix and performing link clustering}
@@ -20,6 +21,11 @@
     lclust.res <- hclust(ldist.res$dist, method = "ward.D2") #clustering of link by link distance matrix
     lclust.dend <- as.dendrogram(lclust.res) #transforming link clustering into dendrogram
     dend.macro <- cut(lclust.dend, h = 8) #cutting at macrogenre level
+    a <- data.frame(g.size = sapply(dend.macro$lower, nleaves)) #macrogenres as ordered in dendrogram results
+    b <- data.frame(g.size = colSums(taste.dat[, 2:21]), 
+                    g.names = names(colSums(taste.dat[, 2:21]))) #original macrogenre sizes
+    c <- right_join(a, b) #joining data frames by macrogenre sizes to get macrogenre labels ordered by dendrogram results
+    names(dend.macro$lower) <- c$g.names #naming macrogenre dendrogram list
 ```
 
 # Dendrogram Plots from Link Clustered Data
@@ -51,11 +57,13 @@
 
 ```{r Creating microgenre dendrograms}
     d3 <- dend.macro$lower$Metal %>% 
-      set("labels", c(rep("", nleaves(d3)))) %>% 
+      set("labels", c(rep("", nleaves(dend.macro$lower$Metal)))) %>% 
+      set("branches_lwd", value = 4) %>% 
       set("branches_k_color", value = brewer.pal(3, "Dark2"), k = 3)
     
     d4 <- dend.macro$lower$Salsa %>% 
-      set("labels", c(rep("", nleaves(d4)))) %>% 
+      set("labels", c(rep("", nleaves(dend.macro$lower$Salsa)))) %>% 
+      set("branches_lwd", value = 4) %>% 
       set("branches_k_color", value = brewer.pal(3, "Dark2"), k = 3)
 ```
 
@@ -63,14 +71,13 @@
 ```{r Plotting microgenre dendrograms}
     dev.off()
     png(here("Plots", "Dend", "metal-branches.png"), height = 900, width = 1600)
-    plot(d3, axes = FALSE) %>% 
-      par(cex = 5) %>% 
+    plot(d3, axes = FALSE) 
+      par(cex = 5) 
       title(xlab = "", ylab = "", main = "Metal")
     
     dev.off()
     png(here("Plots", "Dend", "salsa-branches.png"), height = 900, width = 1600)
-    plot(d4, axes = FALSE) %>% 
-      par(cex = 5) %>% 
-      title(xlab = "", ylab = "", main = "Metal")
-    
+    plot(d4, axes = FALSE)  
+      par(cex = 5) 
+      title(xlab = "", ylab = "", main = "Salsa")
 ```
