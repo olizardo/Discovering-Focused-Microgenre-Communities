@@ -84,9 +84,60 @@
               fig = p,
               height = 25, width = 20)
 ```
-`
-  
 
+
+```{r Microgenre Regression Models (Supp.)}
+    spec <- c("educ", "parcoll", "poly(age.n, 2)", 
+              "blk", "his", "asn", "gender")
+    labs <- c("Intercept", "Education", "Parents College",
+                            "Age", "Age-Squared", 
+                            "Race ID: Black", "Race ID: Hispanic",
+                            "Race ID: Asian", "Gender ID: Woman")
+    
+    res.folk <- genre.reg.mods("Folk", k = 4, xvars = spec)
+    res.indie <- genre.reg.mods("Indie_Alt", k = 4, xvars = spec)
+    
+    tab_model(res.folk$mods, 
+              digits = 3, show.ci = FALSE, 
+              auto.label = FALSE, transform = NULL,
+              pred.labels = labs,
+              file = here("Tabs", "reg-tab-folk.html"))
+    #webshot(here("Tabs", "reg-tab-folk.html"), here("Tabs", "reg-tab-folk.png"))
+    
+    tab_model(res.indie$mods, 
+              digits = 3, show.ci = FALSE, 
+              auto.label = FALSE, transform = NULL,
+              pred.labels = labs,
+              file = here("Tabs", "reg-tab-indie.html"))
+    #webshot(here("Tabs", "reg-tab-indie.html"), here("Tabs", "reg-tab-indie.png"))
+    
+```
+
+```{r Microgenre Regression Plots (Age/Supp.)}
+    age.preds <- pred.probs(x = "age.n", res.folk$mods)
+    p <- plot.preds(d = age.preds, 
+                    xb = c(3, 7, 11),
+                    xlabs = c("Young", "Middle Aged", "Old"),
+                    ym = -0.02,
+                    yl = .1, 
+                    xm = 2, 
+                    xl = 12)
+    save_plot(filename = here("Plots", "Micro", "micro-by-age-folk.png"), 
+              fig = p,
+              height = 25, width = 20)
+    
+    age.preds <- pred.probs(x = "age.n", res.indie$mods)
+    p <- plot.preds(d = age.preds, 
+                    xb = c(3, 7, 11),
+                    xlabs = c("Young", "Middle Aged", "Old"),
+                    ym = -0.05,
+                    yl = .25, 
+                    xm = 2, 
+                    xl = 12)
+    save_plot(filename = here("Plots", "Micro", "micro-by-age-indie.png"), 
+              fig = p,
+              height = 25, width = 20)
+```
 
 
 
