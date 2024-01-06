@@ -43,23 +43,24 @@ date: "`r Sys.Date()`"
     
     kbl(a, format = "html", padding = 2, align = "c") %>% 
         column_spec(1, bold = TRUE) %>% 
-        save_kable(here("Toy", "toy-sim.png"))
-    #webshot(here("Toy", "toy-sim.html"), here("Toy", "toy-sim.png"))
+        save_kable(here("Toy", "toy-sim.html"))
+    webshot(here("Toy", "toy-sim.html"), here("Toy", "toy-sim.png"))
     
     kbl(b, format = "html", padding = 2, align = "c") %>% 
         column_spec(1, bold = TRUE) %>% 
-        save_kable(here("Toy", "toy-dis.png"))
-    #webshot(here("Toy", "toy-dis.html"), here("Toy", "toy-dis.png"))
+        save_kable(here("Toy", "toy-dis.html"))
+    webshot(here("Toy", "toy-dis.html"), here("Toy", "toy-dis.png"))
 ```
 
     
 ```{r Plotting toy example dendrogram}
     hc.res$labels <- e.names
-    p <- fviz_dend(hc.res, k = 4, k_colors = "uchicago", show_labels = TRUE, cex = 1.5, lwd = 2) 
+    p <- fviz_dend(hc.res, k = 4, k_colors = "uchicago", 
+                   show_labels = TRUE, cex = 1.5, lwd = 2) 
     p <- p + geom_hline(yintercept = 0.75, 
                         linetype = "dashed", 
                         color = "red", 
-                        size = 1.2)
+                        linewidth = 1.2)
     p <- p + labs(y = "", title = "") 
     p <- p + theme(axis.line.y = element_blank(), axis.text.y = element_blank())
     p
