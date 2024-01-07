@@ -76,12 +76,12 @@ I address the microgenre issue using a technique for overlapping community detec
     \captionsetup[subfigure]{font=footnotesize,labelfont=footnotesize}
      \centering
      \begin{subfigure}[b]{0.6\textwidth}
-        \includegraphics[width=1.0\textwidth]{Toy/link-clust-toy1.png}
+        \includegraphics[width=1.0\textwidth]{link-clust-toy1.png}
         \caption{Two person-genre edges sharing the same genre.}
         \label{fig:link-toy1}
     \end{subfigure} 
      \begin{subfigure}[b]{0.3\textwidth}
-        \includegraphics[width=1.0\textwidth]{Toy/link-clust-toy2.png}
+        \includegraphics[width=1.0\textwidth]{link-clust-toy2.png}
         \caption{Similarity between person-genre edges depends on the other genres people are linked to.}
         \label{fig:link-toy2}
     \end{subfigure}
@@ -102,17 +102,17 @@ Where $n_+(P_1)$ is the cultural ego network of Person 1 and $n_+(P_3)$ is the c
     \captionsetup[subfigure]{font=footnotesize,labelfont=footnotesize}
     \centering
      \begin{subfigure}[b]{0.4\textwidth}
-        \includegraphics[width=1.0\textwidth, trim={0 12cm 12cm 0},clip]{Toy/toy-sim.png}
+        \includegraphics[width=1.0\textwidth, trim={0 12cm 12cm 0},clip]{toy-sim.png}
         \caption{Edge similarity matrix from toy example.}
         \label{tab:toy-sim}
     \end{subfigure}
      \begin{subfigure}[b]{0.4\textwidth}
-        \includegraphics[width=1.0\textwidth, trim={0 12cm 12cm 0},clip]{Toy/toy-dis.png}
+        \includegraphics[width=1.0\textwidth, trim={0 12cm 12cm 0},clip]{toy-dis.png}
         \caption{Edge distance matrix from toy example.}
         \label{tab:toy-dis}
     \end{subfigure}
      \begin{subfigure}[b]{0.6\textwidth}
-        \includegraphics[width=1.0\textwidth]{Toy/link-clust-toy.png}
+        \includegraphics[width=1.0\textwidth]{link-clust-toy.png}
         \caption{Dendrogram from Ward clustering of toy example edge distance matrix cut at four clusters.}
         \label{fig:link-toy}
     \end{subfigure}
@@ -129,29 +129,29 @@ The more interesting thing is that as we move up to a point below macrogenres cl
 \begin{figure}[t!]
      \begin{subfigure}[b]{0.5\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Plots/Dend/macro.png}
+        \includegraphics[width=1.0\textwidth]{macro.png}
         \caption{c = 8, k = 20}
         \label{fig:dend-macro}
     \end{subfigure} 
      \begin{subfigure}[b]{0.5\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Plots/Dend/macro-lab.png}
+        \includegraphics[width=1.0\textwidth]{macro-lab.png}
         \caption{c = 8, k = 20}
         \label{fig:dend-macro-labels}
     \end{subfigure} 
      \begin{subfigure}[b]{0.5\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Plots/Dend/metal-branches.png}
+        \includegraphics[width=1.0\textwidth]{metal-branches.png}
         \caption{k = 3}
         \label{fig:dend-micro-metal}
     \end{subfigure}
      \begin{subfigure}[b]{0.5\textwidth}
         \centering
-        \includegraphics[width=1.0\textwidth]{Plots/Dend/salsa-branches.png}
+        \includegraphics[width=1.0\textwidth]{salsa-branches.png}
         \caption{k = 3}
         \label{fig:dend-micro-salsa}
     \end{subfigure}
-    \caption{}
+    \caption{Dendrograms from link clustering procedure on real data.}
     \label{fig:dend}
  \end{figure}
  
@@ -198,12 +198,12 @@ Given prior work, a strong expectation is that, at the very least, we should obs
     \label{tab:reg}
     \centering    
      \begin{subfigure}[b]{0.9\textwidth}
-        \includegraphics[trim={0 10cm 7cm 0},clip, width=1.0\textwidth]{Tabs/reg-tab-metal.png}
+        \includegraphics[trim={0 10cm 7cm 0},clip, width=1.0\textwidth]{reg-tab-metal.png}
         % trim={<left> <lower> <right> <upper>}
         %\includegraphics[width=1.0\textwidth]{}
     \end{subfigure} \\
      \begin{subfigure}[b]{0.9\textwidth}
-        \includegraphics[trim={0 10cm 7cm 0},clip, width=1.0\textwidth]{Tabs/reg-tab-salsa.png}
+        \includegraphics[trim={0 10cm 7cm 0},clip, width=1.0\textwidth]{reg-tab-salsa.png}
     \end{subfigure}
 \end{figure}
     
@@ -219,16 +219,17 @@ Because the age effect is specified using a squared polynomial, it can be hard t
 \begin{figure}[t!]
      \begin{subfigure}[b]{0.45\textwidth}
         \centering    
-        \includegraphics[width=1.0\textwidth]{Plots/Micro/micro-by-age-metal.png}
+        \includegraphics[width=1.0\textwidth]{micro-by-age-metal.png}
         \caption{}
         \label{fig:age-metal}
     \end{subfigure}
      \begin{subfigure}[b]{0.45\textwidth}
         \centering    
-        \includegraphics[width=1.0\textwidth]{Plots/Micro/micro-by-age-salsa.png}
+        \includegraphics[width=1.0\textwidth]{micro-by-age-salsa.png}
         \caption{}
         \label{fig:age-salsa}
     \end{subfigure}
+    \caption{Age effects on Metal and Salsa microgenres.}
 \end{figure}
 
 As shown in the first model, the socio-demographic predictors of choosing the ``Metal'' macrogenre label are the ones we would expect from Bryson's original work and the stereotypical perception of the genre's audience held by Americans. Metal fans are less likely to have high levels of education, are less likely to be older, are more likely to be white (negative effects for all other racial identifications compared to the base category), and are more likely to be men ($p<0.01$). So much for the emerging cultural capital story?
